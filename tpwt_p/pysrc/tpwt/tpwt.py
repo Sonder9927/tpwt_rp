@@ -85,6 +85,7 @@ def area_expanded(area: dict, value: float) -> dict:
     area['north'] += value
     return area
 
+
 # create inversion grid nodes
 def creatgridnode_TPWT(out_file: str, area: dict, dgrid: list):
     """
@@ -123,18 +124,18 @@ def rdsetupsimul_phamp_from_earthquake_TPWT(param, eqlistper, sens_dat: str, sec
 
 def simanner_TPWT_run(kern, eqlistper, bin_from='./'):
     """
-    simanner with kern
+    simanner with the kern
     """
 
 
-def find_bad_kern(p, bin_from="./"):
+def find_bad_kern(p, bin_from='./'):
     """
     find bad kern 100 or 300
     will create eqlistper.fine
     """
 
 
-def simanner_and_gridgenvar(p, eq, bin_from="./"):
+def simanner_and_gridgenvar(p, eq, bin_from='./'):
     """
     second time simanner with kern 160 or 360
     and generate grid finally
