@@ -197,7 +197,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 
 [[package]]
-name = "tpwt_rp"
+name = "tpwt_r"
 version = "0.1.0"
 dependencies = [
  "pyo3",
