@@ -11,7 +11,7 @@ fn hello() {
 }
 #[pyfunction]
 fn hello_name(name: &str) -> PyResult<String> {
-    Ok("Hello, ".to_owned() + name + ".\nGood luck!")
+    Ok("Hello, ".to_string() + name + ".\nGood luck!")
 }
 
 /// A Python module implemented in Rust.
