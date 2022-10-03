@@ -1,7 +1,8 @@
 use pyo3::prelude::*;
 use std::cmp::Ordering;
 
-#[pyclass]
+#[pyclass(text_signature = "(x,y)")]
+/// Point class
 pub struct Point {
     x: f64,
     y: f64,
@@ -56,11 +57,11 @@ impl Point {
     fn is_ray_intersects_segment(&self, p1: &Point, p2: &Point) -> bool {
         if p1.y == p2.y {
             return false;
-        } else if (p1.y >= self.y) & (p2.y >= self.y) {
+        } else if (p1.y >= self.y) && (p2.y >= self.y) {
             return false;
-        } else if (p1.y <= self.y) & (p2.y <= self.y) {
+        } else if (p1.y <= self.y) && (p2.y <= self.y) {
             return false;
-        } else if (p1.x < self.x) & (p2.x < self.x) {
+        } else if (p1.x < self.x) && (p2.x < self.x) {
             return false;
         }
 
