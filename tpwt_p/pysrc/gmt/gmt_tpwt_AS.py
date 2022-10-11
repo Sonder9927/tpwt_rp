@@ -1,20 +1,17 @@
 # author: sonder
 # created: 11 June 2022
-# version: 1.2
+# version: 1.3.0
 import pygmt
 from icecream import ic
-import os
+from pathlib import Path
 import pandas as pd
 
-"""
-plot std and average std
-"""
+from pysrc.gmt import average
 
 def make_cpt(VEL_CPT):
     pygmt.makecpt(cmap="plot/gridvel_6_v3.cpt", series=[-10, 10, 0.05], background="", continuous="", output=VEL_CPT)
     #pygmt.makecpt(cmap="seis", series=[3.3, 3.9, 0.1], background="", continuous="", output="plot/test2.cpt")
     pygmt.makecpt(cmap="hot", series=[0, 80, 2.5], background="", continuous="", output="plot/span_AS/std.cpt")
-
 
 def make_gra(region, TOPO_GRA):
     TOPO_GRD = 'plot/span_AS/topo.grd'
@@ -24,33 +21,16 @@ def make_gra(region, TOPO_GRA):
     pygmt.grdsample(grid=TOPO_GRD, outgrid=TOPO_GRD2, spacing="0.01", region=region)
     pygmt.grdgradient(grid=TOPO_GRD2, azimuth=45, outgrid=TOPO_GRA, normalize="t", verbose="")
 
-
-def average(file):
-    '''
-    read the velocity and calculate the average value
-    return avevel and title
-    '''
-    df = pd.read_csv(file, sep="\s+", header=None, names=["la", "lo", "vel"], engine="python")
-    avevel = df["vel"].sum() / len(df)
-    title = os.path.basename(file)
-    title = "%s vel=%5.4f" % (title, avevel)
-    return avevel, title
-
-def dp_title_tmpgrd_stdgrd(per, region, tpwpath):
+def dp_title_fname_tmpgrd_stdgrd(region, grid, std):
     # get TOMO_VEL file and format title
-    files = os.listdir('{}/{}/new_2d'.format(tpwpath, per))
-    for f in files:
-        if "grid." in f and not f.endswith(".ave"):
-            ic(f)
-            TOMO_VEL = "{}/{}/new_2d/{}".format(tpwpath, per, f)
-            _, title = average(TOMO_VEL)
-        elif f.endswith("_v2"):
-            ic(f)
-            stdfile = "{}/{}/new_2d/{}".format(tpwpath, per, f)
+    avgvel = average(grid)
+    title = "%s vel=%5.4f" % (grid.name, avgvel)
+    ps: list = grid.parents
+    fname = f"plot/figs/grid_{ps[-3].name}_AS.png"
 
     # grid from TOMO_VEL will used in grdimage
     pygmt.blockmean(
-        data = TOMO_VEL + ".ave",
+        data = str(grid) + ".ave",
         region = region,
         spacing = "0.25/0.25",
         outfile = "plot/span_AS/ttmp"
@@ -70,7 +50,7 @@ def dp_title_tmpgrd_stdgrd(per, region, tpwpath):
     )
     # grid from stdfile will used in grdimage
     pygmt.blockmean(
-        data = stdfile,
+        data = std,
         region = region,
         spacing = "0.25/0.25",
         outfile = "plot/span_AS/stdtmp"
@@ -88,12 +68,13 @@ def dp_title_tmpgrd_stdgrd(per, region, tpwpath):
         spacing = "0.02",
         outgrid = "plot/span_AS/std.grd2",
     )
-    return title
+    return title, fname
 
-def dp_grid(per, region, projection, VEL_CPT, TOPO_GRA, tpwpath):
+def dp_grid(region, grid, std, projection, VEL_CPT, TOPO_GRA):
     # get title and create tmp2.grd
-    title = dp_title_tmpgrd_stdgrd(per, region, tpwpath)
+    title, fname = dp_title_fname_tmpgrd_stdgrd(region, grid, std)
     ic(title)
+    ic(fname)
 
     # Initial the intance
     fig = pygmt.Figure()
@@ -130,7 +111,7 @@ def dp_grid(per, region, projection, VEL_CPT, TOPO_GRA, tpwpath):
     fig.plot(data="plot/weihe2.txt", pen="thick,black,-")
 
     # plot station
-    df_station = pd.read_csv("plot/station.lst", sep="\s+", header=None, names=["la", "lo"], index_col=0, engine="python")
+    df_station = pd.read_csv("plot/station.lst", sep="\s+", header=None, names=["lo", "la"], index_col=0, engine="python")
     fig.plot(
         data = df_station,
         pen = "black",
@@ -145,7 +126,7 @@ def dp_grid(per, region, projection, VEL_CPT, TOPO_GRA, tpwpath):
         frame = "xa2f2"
     )
 
-    return fig 
+    return fig, fname 
 
 # preparing
 def dp_std(fig, region, projection):
@@ -190,25 +171,24 @@ def dp_std(fig, region, projection):
     )
     return fig
 
-def dp_plot(per, region, VEL_CPT, TOPO_GRA, tpwpath):
+def dp_plot(region, grid, std, VEL_CPT, TOPO_GRA):
 
     projection = "m{}/{}/0.7i".format(region[0], region[2])
 
     # create an instance of the Figure class and plot grid
-    fig = dp_grid(per, region, projection, VEL_CPT, TOPO_GRA, tpwpath)
+    fig, fname = dp_grid(region, grid, std, projection, VEL_CPT, TOPO_GRA)
 
-    # move
-    fig.shift_origin(yshift = "-12c")
+    # # move
+    # fig.shift_origin(yshift = "-12c")
 
-    # plot std
-    fig = dp_std(fig, region, projection)
+    # # plot std
+    # fig = dp_std(fig, region, projection)
 
-    # save figure
-    fig.savefig(f"plot/fig/grid{per}_ave_with_stddev.png")
-    ic(per, "complete")
+    # # save figure
+    # fig.savefig(fname)
 
-def main():
-    region = []
+def dp_AS():
+    region= [118.5, 122.5, 29, 32.6]
     ic(region)
 
     # setting
@@ -222,14 +202,14 @@ def main():
 
     # period figure
     #per = [20, 25, 26, 28, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100]
-    for tpw in os.listdir():
-        if "TPWT_" in tpw:
-            tpwpath =  tpw
-            break
-    for per in os.listdir(tpwpath):
-        dp_plot(per, region, VEL_CPT, TOPO_GRA, tpwpath)
+    work = Path("./")
+    grid_list = list(work.glob("**/**/new_2d*/grid.*"))
+    grid_list = [i for i in grid_list if not i.suffix == ".ave"]
+    std_list = list(work.glob("**/**/new_2d*/stddev.*_v2"))
+    for (grid, std) in zip(grid_list, std_list):
+        dp_plot(region, grid, std, VEL_CPT, TOPO_GRA)
 
 if __name__ == "__main__":
     ic("Hello Sonder.")
-    main()
+    dp_AS()
     ic("Good luck!")

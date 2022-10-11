@@ -1,18 +1,16 @@
 # author: sonder
 # created: 11 June 2022
-# version: 1.2.b
-
+# version: 1.3.a
 '''
 description:
-plot velocity with scripts from Liu hl.
+plot velocity with scripts from liuhl
 '''
-
-import pygmt
 from icecream import ic
-import os
 import pandas as pd
-import threading
+from pathlib import Path
+import pygmt
 
+from pysrc.gmt import average
 
 def make_cpt(file):
     # get range
@@ -24,7 +22,6 @@ def make_cpt(file):
     #pygmt.makecpt(cmap="plot/Vc_1.8s.cpt", series=range, background="", output=f"plot/span_Vel/Icpt{per}.cpt")
     pygmt.makecpt(cmap="plot/Vc_1.8s.cpt", series=range, background="", output=f"plot/span_Vel/Icpt.cpt")
 
-
 def make_gra(region, TOPO_GRA):
     TOPO_GRD = 'plot/span_Vel/topo.grd'
     TOPO_GRD2 = 'plot/span_Vel/topo.grd2'
@@ -34,28 +31,22 @@ def make_gra(region, TOPO_GRA):
     pygmt.grdgradient(grid=TOPO_GRD2, azimuth=45, outgrid=TOPO_GRA, normalize="t", verbose="")
 
 
-def average(file):
-    '''
-    read the velocity and calculate the average value
-    return avevel and title
-    '''
-    df = pd.read_csv(file, sep="\s+", header=None, names=["la", "lo", "vel"], engine="python")
-    avevel = df["vel"].sum() / len(df)
-    title = os.path.basename(file)
-    title = "%s vel=%5.4f" % (title, avevel)
-    return avevel, title
-
-
-def dp_title_and_tmpgrd(per, region, TOMO_VEL):
-
+def dp_title_fname_tmpgrd(region, grid):
     # get title of figure
-    _, title = average(TOMO_VEL)
+    avgvel = average(grid)
+    title = "%s vel=%5.4f" % (grid.name, avgvel)
+    ps = grid.parents
+    fname = f"plot/figs/grid_{ps[-3].name}_Vel"
+    if "check" in ps[-1].name:
+        fname += "_check.png"
+    else:
+        fname += ".png"
 
-    make_cpt(TOMO_VEL)
+    make_cpt(grid)
 
     # grid from TOMO_VEL will used in grdimage
     pygmt.blockmean(
-        data = TOMO_VEL,
+        data = grid,
         region = region,
         spacing = "0.01",
         outfile = "plot/span_Vel/ttmp"
@@ -73,33 +64,27 @@ def dp_title_and_tmpgrd(per, region, TOMO_VEL):
         spacing = "0.01",
         outgrid = "plot/span_Vel/tmp2.grd",
     )
-    return title
+    return title, fname
 
-
-def dp_grid(per, region, TOMO_VEL):
+def dp_grid(region, grid):
 
     # get TOPO_GRA
     TOPO_GRA = 'plot/span_Vel/topo.gradient'
     make_gra(region, TOPO_GRA)
 
-    # get title and create tmp2.grd
-    title = dp_title_and_tmpgrd(per, region, TOMO_VEL)
+    # get title, fname and create tmp2.grd
+    title, fname = dp_title_fname_tmpgrd(region, grid)
     ic(title)
+    ic(fname)
 
     # Initial the intance
     fig = pygmt.Figure()
-
 
     fig.grdimage(
         grid = "plot/span_Vel/topo.grd2",
         shading = TOPO_GRA,
         cmap = f"plot/span_Vel/g.cpt",
     )
-
-    #pygmt.grdclip(
-    #    grid = "data/boundry.dat",
-    #    region = region,
-    #)
 
     # grdimage
     fig.grdimage(
@@ -117,7 +102,7 @@ def dp_grid(per, region, TOMO_VEL):
     #fig.plot(data="plot/weihe2.txt", pen="thick,black,-")
 
     # plot station
-    df_station = pd.read_csv("plot/station.lst", sep="\s+", header=None, names=["la", "lo"], index_col=0, engine="python")
+    df_station = pd.read_csv("plot/station.lst", sep="\s+", header=None, names=["lo", "la"], index_col=0, engine="python")
     fig.plot(
         data = df_station,
         style = "t0.2",
@@ -139,60 +124,25 @@ def dp_grid(per, region, TOMO_VEL):
         frame = "xa0.05f0.05",
     )
 
-    return fig
+    fig.savefig(fname)
 
 
-def dp_plot(per, region, tpwpath, check=False):
+# hou mian you hua:
+# jiang grid he check feng zhuang jin yi ge struct
+def plot_Vel(check=False):
+    region= [118.5, 122.5, 29, 32.6]
+    ic(region)
 
-    # get TOMO_VEL file and format title
-    tpw_path = '{}/{}/new_2d'.format(tpwpath, per)
-    TOMO_VEL = "not exists"
-    files = os.listdir(tpw_path)
-    for f in files:
-        if check:
-            if "check" in f and os.path.isdir("{}/{}".format(tpw_path, f)):
-                for ff in os.listdir(f"{tpw_path}/{f}"):
-                    if "grid." in ff and not ff.endswith(".ave"):
-                        ic(check)
-                        ic(ff)
-                        TOMO_VEL = "{}/{}/{}".format(tpw_path, f, ff)
-                        break
-                break
-                        
-        else:
-            if "grid." in f and not f.endswith(".ave"):
-                ic(f)
-                TOMO_VEL = "{}/{}".format(tpw_path, f)
-                break
-    ic(TOMO_VEL)
-    # create an instance of the Figure class and plot grid
-    fig = dp_grid(per, region, TOMO_VEL)
-
-    # save figure
+    work = Path("./")
     if check:
-        fig.savefig(f"plot/fig/grid{per}_vel_check.png")
+        grid_list = list(work.glob("**/**/new_2d*/check*/grid.*"))
     else:
-        fig.savefig(f"plot/fig/grid{per}_vel.png")
-    ic(per, "complete")
+        grid_list = list(work.glob("**/**/new_2d*/grid.*"))
 
-def plot_Vel():
-    area= []
-    ic(area)
-
-    # period figure
-    for tpw in os.listdir():
-        if "TPW_" in tpw:
-            tpwpath = tpw
-            break
-    for per in os.listdir(tpwpath):
-        threads = []
-        #threads.append(threading.Thread(target=dp_plot, args=(per, area, tpwpath)))
-        threads.append(threading.Thread(target=dp_plot, args=(per, area, tpwpath, True)))
-        for t in threads:
-            t.start()
-            t.join()
-    #dp_plot(per, area)
-    #dp_plot(per, area, check=True)
+    # grid_list = [i for i in grid_list if i.suffix == ".ave"]
+    grid_list = [i for i in grid_list if not i.suffix == ".ave"]
+    for grid in grid_list:
+        dp_grid(region, grid)
 
 if __name__ == "__main__":
     ic("Hello Sonder.")
