@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def average(file: PosixPath) -> str:
+def average(file) -> str:
     '''
     read the velocity and calculate the average value
     return avevel and title
