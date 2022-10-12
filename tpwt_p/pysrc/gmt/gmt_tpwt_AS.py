@@ -195,7 +195,8 @@ def dp_plot(region, grid, std, VEL_CPT, TOPO_GRA):
 
 
 def dp_AS():
-    region= [118.5, 122.5, 29, 32.6]
+    # use my tpwt_r::Region
+    region = [118.5, 122.5, 29, 32.6]
     ic(region)
 
     # setting
@@ -210,9 +211,9 @@ def dp_AS():
     # period figure
     #per = [20, 25, 26, 28, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100]
     work = Path("./")
-    grid_list = list(work.glob("**/**/new_2d*/grid.*"))
+    grid_list = list(work.glob("TPWT_*/**/new_2d*/grid.*"))
     grid_list = [i for i in grid_list if not i.suffix == ".ave"]
-    std_list = list(work.glob("**/**/new_2d*/stddev.*_v2"))
+    std_list = list(work.glob("TPWT_*/**/new_2d*/stddev.*_v2"))
     for (grid, std) in zip(grid_list, std_list):
         dp_plot(region, grid, std, VEL_CPT, TOPO_GRA)
 
