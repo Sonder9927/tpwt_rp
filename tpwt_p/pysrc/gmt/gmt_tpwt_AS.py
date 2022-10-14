@@ -6,14 +6,12 @@ from icecream import ic
 from pathlib import Path
 import pandas as pd
 
-from pysrc.gmt import average
-
+from pysrc.info import average
 
 def make_cpt(VEL_CPT):
     pygmt.makecpt(cmap="plot/gridvel_6_v3.cpt", series=[-10, 10, 0.05], background="", continuous="", output=VEL_CPT)
     #pygmt.makecpt(cmap="seis", series=[3.3, 3.9, 0.1], background="", continuous="", output="plot/test2.cpt")
     pygmt.makecpt(cmap="hot", series=[0, 80, 2.5], background="", continuous="", output="plot/span_AS/std.cpt")
-
 
 def make_gra(region, TOPO_GRA):
     TOPO_GRD = 'plot/span_AS/topo.grd'
@@ -22,7 +20,6 @@ def make_gra(region, TOPO_GRA):
     pygmt.grdcut(grid="plot/ETOPO1.grd", region=region, outgrid=TOPO_GRD)
     pygmt.grdsample(grid=TOPO_GRD, outgrid=TOPO_GRD2, spacing="0.01", region=region)
     pygmt.grdgradient(grid=TOPO_GRD2, azimuth=45, outgrid=TOPO_GRA, normalize="t", verbose="")
-
 
 def dp_title_fname_tmpgrd_stdgrd(region, grid, std):
     # get TOMO_VEL file and format title
@@ -72,7 +69,6 @@ def dp_title_fname_tmpgrd_stdgrd(region, grid, std):
         outgrid = "plot/span_AS/std.grd2",
     )
     return title, fname
-
 
 def dp_grid(region, grid, std, projection, VEL_CPT, TOPO_GRA):
     # get title and create tmp2.grd
@@ -132,7 +128,6 @@ def dp_grid(region, grid, std, projection, VEL_CPT, TOPO_GRA):
 
     return fig, fname 
 
-
 # preparing
 def dp_std(fig, region, projection):
     
@@ -144,7 +139,7 @@ def dp_std(fig, region, projection):
         area_thresh = 10000,
         land = "white",
         shorelines = "",
-        # yshift = "-12",
+#yshift = "-12",
         resolution = "l",
     )
 
@@ -176,7 +171,6 @@ def dp_std(fig, region, projection):
     )
     return fig
 
-
 def dp_plot(region, grid, std, VEL_CPT, TOPO_GRA):
 
     projection = "m{}/{}/0.7i".format(region[0], region[2])
@@ -193,10 +187,8 @@ def dp_plot(region, grid, std, VEL_CPT, TOPO_GRA):
     # save figure
     fig.savefig(fname)
 
-
 def dp_AS():
-    # use my tpwt_r::Region
-    region = [118.5, 122.5, 29, 32.6]
+    region= [118.5, 122.5, 29, 32.6]
     ic(region)
 
     # setting
@@ -211,9 +203,9 @@ def dp_AS():
     # period figure
     #per = [20, 25, 26, 28, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100]
     work = Path("./")
-    grid_list = list(work.glob("TPWT_*/**/new_2d*/grid.*"))
+    grid_list = list(work.glob("TPW*/**/**/grid.*"))
     grid_list = [i for i in grid_list if not i.suffix == ".ave"]
-    std_list = list(work.glob("TPWT_*/**/new_2d*/stddev.*_v2"))
+    std_list = list(work.glob("TPW*/**/**/stddev.*_v2"))
     for (grid, std) in zip(grid_list, std_list):
         dp_plot(region, grid, std, VEL_CPT, TOPO_GRA)
 

@@ -98,7 +98,7 @@ def gmt_plot_path(title, region, path_data, sta_data):
     return fig
 
 
-def gmt_tpwt_path(param: Param, eqlistper: str):
+def plot_path(param: Param, eqlistper: str):
     title, path_data, sta_data = get_plot_data(param, eqlistper)
 
     fig = gmt_plot_path(title, param.region, path_data, sta_data)
@@ -106,7 +106,7 @@ def gmt_tpwt_path(param: Param, eqlistper: str):
     fig.savefig(f"ray_path_period{param.period}.png")
 
 
-def main(param_json: str, periods: list):
+def gmt_tpwt_path(param_json: str, periods: list):
     # instancs a parameters class
     p = Param
     # get parameters
@@ -129,7 +129,7 @@ def main(param_json: str, periods: list):
                 ic(str(eqlistper))
                 # more details to save time, dont use this way
                 if eqlistper.exists:
-                    pool.submit(gmt_tpwt_path, p, str(eqlistper))
+                    pool.submit(plot_path, p, str(eqlistper))
                 else:
                     raise FileNotFoundError(f"No eqlistper{period} found")
     else:
@@ -137,4 +137,4 @@ def main(param_json: str, periods: list):
 
 
 if __name__ == "__main__":
-    main("param.json", periods=[26])
+    gmt_tpwt_path("param.json", periods=[26])

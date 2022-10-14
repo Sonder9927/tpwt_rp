@@ -10,7 +10,7 @@ import pandas as pd
 from pathlib import Path
 import pygmt
 
-from pysrc.gmt import average
+from pysrc.info import average
 
 def make_cpt(file):
     # get range
@@ -130,15 +130,14 @@ def dp_grid(region, grid):
 # hou mian you hua:
 # jiang grid he check feng zhuang jin yi ge struct
 def plot_Vel(check=False):
-    # use my tpwt_r::Region
-    region = [118.5, 122.5, 29, 32.6]
+    region= [118.5, 122.5, 29, 32.6]
     ic(region)
 
     work = Path("./")
     if check:
-        grid_list = list(work.glob("TPWT_*/**/new_2d*/check*/grid.*"))
+        grid_list = list(work.glob("**/**/**/check*/grid.*"))
     else:
-        grid_list = list(work.glob("TPWT_*/**/new_2d*/grid.*"))
+        grid_list = list(work.glob("TPW*/**/**/grid.*"))
 
     # grid_list = [i for i in grid_list if i.suffix == ".ave"]
     grid_list = [i for i in grid_list if not i.suffix == ".ave"]
