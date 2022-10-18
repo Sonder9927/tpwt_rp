@@ -28,7 +28,7 @@ def get_evt_drop(evt1, evt2):
     drop_lst = set()
     for i in range(len(temp)-1):
         du = (temp[i+1] - temp[i]).total_seconds()
-        if du < 10800:
+        if du < 10_800:
             drop_lst.update(temp[i: i+2])
 
     evt.drop(drop_lst, inplace=True)

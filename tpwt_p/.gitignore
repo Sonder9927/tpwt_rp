@@ -1,2 +1,3 @@
 pysrc/inside/*.lst
 pysrc/inside/tpwt.*
+pysrc/tpwt_flow/__pycache__
