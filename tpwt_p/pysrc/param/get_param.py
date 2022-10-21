@@ -3,7 +3,7 @@ import demjson
 # param class
 class Param:
 
-    def __repr__():
+    def __repr__(self):
         return "This is a parameters class."
 
 
