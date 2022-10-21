@@ -36,12 +36,14 @@ class Evt_Files:
     def evt_cat(self, cat, pattern, form):
         evt = self.evt["time"].apply(lambda x: time_convert(str(x)[:19], pattern, form))
         evt.to_csv(cat, sep=" ", header=False, index=False)
+        ic("Sucessfully get", cat)
 
     def evt_lst(self, lst, pattern, form):
         evt = self.evt
         evt["time"] = evt["time"].apply(lambda x: time_convert(str(x)[:19], pattern, form))
         evt[["longitude","latitude"]] = self.evt[["latitude","longitude"]]
         evt.to_csv(lst, sep=" ", header=False, index=False)
+        ic("Sucessfully get", lst)
 
 
 def time_convert(val: str, pattern:str, form: str) -> str:

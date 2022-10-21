@@ -1,5 +1,5 @@
 {
-  "variables": {
+  "inverse": {
     "damping": [
       0.2,
       0.25
@@ -8,19 +8,29 @@
       50,
       65,
       80
-    ],
+    ]
+  },
+  "filter": {
     "snr": [
       10,
       12,
       15
     ],
-    "tcutoff": [
+    "tcut": [
       4,
       6,
       8,
       10,
       12
     ],
+    "time_delta": 10800,
+    "dist": 3500,
+    "nsta_cutoff": 20,
+    "stacut_per": 0.7,
+    "ampcut": 2,
+    "tevtrmscut": 8.0,
+    "ampevtrmscut": 1.0,
+    "channel": "LHZ",
     "dcheck": [
       0.6,
       0.8,
@@ -28,19 +38,25 @@
     ],
     "dvel": 8
   },
-  "files": {
-    "sta": "station.lst",
-    "evt": "event.lst",
-    "sac": "SAC",
-    "output": "new_2d",
-    "path": "path",
-    "all_events": "all_events",
-    "sens": "sens_dir"
+  "targets": {
+    "evt2": [
+      "TPWT/info/event_30.csv",
+      "TPWT/info/event_120.csv"
+    ],
+    "evt_cat": "TPWT/info/event.cat",
+    "evt_lst": "TPWT/info/event.lst",
+    "sta_lst": "TPWT/info/station.lst",
+    "only_Z_1Hz": "target/only_Z_1Hz",
+    "cut_dir": "target/event_cut",
+    "sac": "target/SAC",
+    "path": "target/path",
+    "all_events": "target/all_events",
+    "sens": "target/sens_dir"
   },
-  "immutables": {
-    "average_velocity": [
+  "model": {
+    "vels": [
       3.586,
-      3.7,
+      3.64,
       3.69,
       3.787,
       3.8242,
@@ -54,7 +70,7 @@
       4.01,
       4.03
     ],
-    "period": [
+    "periods": [
       20,
       25,
       26,
@@ -73,15 +89,8 @@
     "region": {
       "west": 118.5,
       "east": 122.5,
-      "sourth": 29,
+      "south": 29,
       "north": 32.6
-    },
-    "dist": 3500,
-    "nsta_cutoff": 20,
-    "stacut_per": 0.7,
-    "ampcut": 2,
-    "tevtrmscut": 8.0,
-    "ampevtrmscut": 1.0,
-    "channel": "LHZ"
+    }
   }
 }

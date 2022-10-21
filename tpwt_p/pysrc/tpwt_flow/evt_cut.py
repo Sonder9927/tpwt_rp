@@ -4,7 +4,7 @@ from icecream import ic
 import os, shutil
 import subprocess
 
-from pysrc.tpwt import get_binuse
+from .tpwt_bin import get_binuse
 
 class Evt_Cut:
     def __init__(self, data, patterns, z) -> None:
