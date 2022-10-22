@@ -1,18 +1,19 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from icecream import ic
-import os, shutil
+import os
 import obspy
 import subprocess
 
 from .tpwt_bin import get_binuse
-from .check import rglob_patterns
+from .rose import glob_patterns, re_create_dir, remove_files
 
 class Evt_Cut:
     def __init__(self, data: str) -> None:
         self.data = Path(data)
+        ic("Hello, this is EVT cutter.")
 
-    def get_Z_1Hz(self, target, patterns, z):
+    def get_Z_1Hz(self, target: str, patterns: list):
         """
         from data get only Z component sac files and downsample to 1 Hz 
         will put into `target` dir
@@ -21,13 +22,12 @@ class Evt_Cut:
         ic("getting only_Z_1Hz...")
 
         self.target_z = Path(target)
-        self.z = z
-        # clear and re-create
-        if self.target_z.exists():
-            shutil.rmtree(self.target_z)
-        self.target_z.mkdir(parents=True)
+        self.patterns = patterns
 
-        zs = rglob_patterns(self.data, patterns)
+        # clear and re-create
+        self.target_z = re_create_dir(target)
+
+        zs = glob_patterns("rglob", self.data, patterns)
 
         def batch_1Hz(file_path):
             """
@@ -35,9 +35,9 @@ class Evt_Cut:
             to down sample every target file
             which will be putted into z_dir
             """
-            file_z = self.target_z / f"{file_path.name}_{self.z}"
-            # method_sac(file_path, file_z)
-            method_obspy(file_path, str(file_z))
+            file_z = self.target_z / file_path.name
+            # decimate_sac(file_path, file_z)
+            decimate_obspy(file_path, str(file_z))
 
         with ThreadPoolExecutor(max_workers=4) as pool:
             pool.map(batch_1Hz, zs)
@@ -52,15 +52,12 @@ class Evt_Cut:
             cut_from = Path(cut_from)
         else:
             cut_from = self.target_z
-            patterns = [f"*_{self.z}"]
+            patterns = self.patterns
 
-        target_cut = Path(target)
-        if target_cut.exists():
-            shutil.rmtree(target_cut)
-        target_cut.mkdir(parents=True)
+        self.target_cut = re_create_dir(target)
 
         # get list of mseed/SAC files (direcroty and file names)
-        sacs = rglob_patterns(cut_from, patterns)
+        sacs = glob_patterns("rglob", cut_from, patterns)
         # batch process
         batch = 1_000
         sacs_batch_list = [sacs[i: i+batch] for i in range(0, len(sacs), batch)]
@@ -83,15 +80,14 @@ class Evt_Cut:
             cmd_string = 'echo shell start\n'
             cmd_string += f'{mktraceiodb} -L {done_lst} -O {db} -LIST {lst} -V\n'  # no space at end!
             cmd_string += f'{cutevent} '
-            cmd_string += f'-V -ctlg {cat} -tbl {db} -b +0 -e +{time_delta} -out {target_cut}\n'
+            cmd_string += f'-V -ctlg {cat} -tbl {db} -b +0 -e +{time_delta} -out {self.target_cut}\n'
             cmd_string += 'echo shell end'
             subprocess.Popen(
                 ['bash'],
                 stdin = subprocess.PIPE
             ).communicate(cmd_string.encode())
 
-            for f in [lst, db, done_lst]:
-                os.remove(f)
+            remove_files([lst, db, done_lst])
 
         with ThreadPoolExecutor(max_workers=5) as pool:
             pool.map(
@@ -101,7 +97,7 @@ class Evt_Cut:
             )
 
 
-def method_sac(ffrom, fto):
+def decimate_sac(ffrom, fto):
     # method by sac
     s = f"r {ffrom} \n"
     s += "decimate 5 \n"
@@ -111,7 +107,7 @@ def method_sac(ffrom, fto):
     subprocess.Popen(['sac'], stdin=subprocess.PIPE).communicate(s.encode())
 
 
-def method_obspy(ffrom, fto: str):
+def decimate_obspy(ffrom, fto: str):
     # method by obspy
     # Read the seismogram.
     st = obspy.read(ffrom)

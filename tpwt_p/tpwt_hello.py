@@ -17,7 +17,7 @@ def tpwt(param_json: str):
 
     # get event lst and cat from 30 to 120
     [evt30, evt120] = param.evt_files
-    evt = tpwt_flow.Evt_Files(evt30, evt120)
+    evt = tpwt_flow.Evt_Make(evt30, evt120)
     evt.concat()
     evt.cut_time_delta(param.time_delta)
     # ic(evt.info())

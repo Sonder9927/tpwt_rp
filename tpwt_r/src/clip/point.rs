@@ -10,8 +10,18 @@ pub struct Point {
 #[pymethods]
 impl Point {
     #[new]
-    fn new(x: f64, y: f64) -> Self {
-        Point { x, y }
+    fn new(l: Option<[f64; 2]>, x: Option<f64>, y: Option<f64>) -> Self {
+        match l {
+            Some(l) => {
+                let [x, y] = l;
+                Point { x, y }
+            }
+            None => {
+                let x = x.unwrap();
+                let y = y.unwrap();
+                Point { x, y }
+            }
+        }
     }
 
     fn __repr__(&self) -> String {

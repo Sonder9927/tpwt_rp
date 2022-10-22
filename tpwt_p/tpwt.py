@@ -9,7 +9,7 @@ __author__ = "Sonder"
 
 
 def evts_from_30_to_120(evt1, evt2):
-    evt = tpwt_flow.Evt_Files(evt1, evt2)
+    evt = tpwt_flow.Evt_Make(evt1, evt2)
     evt.concat()
     evt.cut_time_delta(param.filter["time_delta"])
     pattern = "%Y-%m-%dT%H:%M:%S"
@@ -19,10 +19,15 @@ def evts_from_30_to_120(evt1, evt2):
     evt.evt_lst(param.targets["evt_lst"], pattern, lst_form)
 
 
-def evt_cut(patterns, suffix):
+def evt_cut(patterns):
     data = tpwt_flow.Evt_Cut(param.targets["origin"])  # if set z_pattern to '1' the new file will be `file_1`
-    data.get_Z_1Hz(param.targets["only_Z_1Hz"], patterns, suffix)  # get only_Z_1Hz/file_origin{z_pattern} and set self.only_Z_1Hz=Path(only_Z_1Hz)
+    data.get_Z_1Hz(param.targets["only_Z_1Hz"], patterns)  # get only_Z_1Hz/file_origin{z_pattern} and set self.only_Z_1Hz=Path(only_Z_1Hz)
     data.cut_event(param.targets["cut_dir"], param.targets["evt_cat"], param.filter["time_delta"])  # if cut_from: use cut_from else: use self.only_Z_1Hz
+
+
+def sac_format():
+    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], param.targets["evt_lst"], param.targets["sta_lst"])
+    sac.get_SAC(param.targets["sac"])
 
 
 def tpwt(param_json: str):
@@ -38,13 +43,11 @@ def tpwt(param_json: str):
     evts_from_30_to_120(evt30, evt120)
 
     # data cut event
-    suffix = "1"
     search = ["*Z.sac", "*Z.SAC"]
-    evt_cut(search, suffix)
+    evt_cut(search)
 
-    # # process sac files
-    # sac = tpwt_flow.Sac_Format(param.cut_dir, param.evt_lst, param.sta_lst)
-    # sac.get_SAC(param.sac)
+    # process sac files
+    sac_format()
 
     # # check data format
     # tpwt_check(param.sac)

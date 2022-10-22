@@ -3,11 +3,12 @@ import datetime as dt
 import pandas as pd
 
 
-class Evt_Files:
+class Evt_Make:
     def __init__(self, evt1, evt2):
         self.evt1 = pd.read_csv(evt1, usecols=["time", "latitude", "longitude"])
         self.evt2 = pd.read_csv(evt2, usecols=["time", "latitude", "longitude"])
         self.state = "NONE"
+        ic("Hello, this is EVT maker.")
 
     def info(self):
         return f"The state of evt is {self.state},\nevt:\n{self.evt}"
