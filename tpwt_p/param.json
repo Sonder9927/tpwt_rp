@@ -39,6 +39,7 @@
     "dvel": 8
   },
   "targets": {
+    "origin": "target/data",
     "evt2": [
       "TPWT/info/event_30.csv",
       "TPWT/info/event_120.csv"
