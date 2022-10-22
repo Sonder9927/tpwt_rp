@@ -1,7 +1,11 @@
 pysrc/inside/*.lst
 pysrc/inside/tpwt.*
+
 pysrc/tpwt_flow/__pycache__
 pysrc/tpwt_flow/data_filter/__pycache__
 pysrc/tpwt_flow/tpwt_iter/__pycache__
+pysrc/tpwt_flow/check/__pycache__
+
 pysrc/param/__pycache__
+
 TPWT/bin/*
