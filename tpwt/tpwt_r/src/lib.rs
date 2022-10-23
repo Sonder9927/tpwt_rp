@@ -1,8 +1,10 @@
-mod clip;
 mod hello;
+mod mark;
+mod navi;
 
-use crate::clip::point::Point;
-use crate::clip::region::Region;
+use crate::mark::data_info::Info;
+use crate::navi::point::Point;
+use crate::navi::region::Region;
 use pyo3::prelude::*;
 
 /// A Python module implemented in Rust.
@@ -12,5 +14,6 @@ fn tpwt_r(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(hello::hello_name, m)?)?;
     m.add_class::<Point>()?;
     m.add_class::<Region>()?;
+    m.add_class::<Info>()?;
     Ok(())
 }

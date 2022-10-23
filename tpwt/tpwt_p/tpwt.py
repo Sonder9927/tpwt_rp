@@ -1,8 +1,8 @@
 from icecream import ic
+
+from tpwt_p.param import get_param_json
 from tpwt_p import tpwt_flow
 import tpwt_r
-
-from .param import get_param_json
 
 
 __author__ = "Sonder"
