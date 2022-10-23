@@ -1,0 +1,38 @@
+# set shell := ["fish", "-c"]
+
+vi := "lvim"
+
+# default
+hello:
+    @echo 'Hello, world!'
+    @just --list
+
+r := "tpwt_r"
+p := "tpwt_p"
+
+ig := "'TPWT|temp|target|__pycache__'"
+
+# tree
+tree:
+  tree -d -I {{ig}}
+
+# eidt rust lib.rs
+er:
+  {{vi}} {{r}}/src/lib.rs
+
+# maturin develop
+up:
+  cd {{r}}; \
+  maturin develop
+
+# edit python scripts
+ep:
+  {{vi}} {{p}}/tpwt.py
+
+# edit python scripts
+eip:
+  jupyter notebook tpwt_hello.ipynb
+
+# test
+test:
+  {{vi}} test.py

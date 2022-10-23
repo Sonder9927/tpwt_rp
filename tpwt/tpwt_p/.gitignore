@@ -1,0 +1,5 @@
+*__pycache__
+
+TPWT/bin/*
+
+tpwt_p/
