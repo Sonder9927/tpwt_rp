@@ -3,16 +3,16 @@ use std::collections::HashMap;
 
 #[pyclass(text_signature = "(info)")]
 /// Region class
-pub struct Info {
+pub struct SES {
     data: String,
     evt: String,
     sta: String,
 }
 #[pymethods]
-impl Info {
+impl SES {
     #[new]
     fn new(info: HashMap<String, &str>) -> Self {
-        Info {
+        SES {
             data: info["sac"].to_string(),
             evt: info["evt_lst"].to_string(),
             sta: info["sta_lst"].to_string(),

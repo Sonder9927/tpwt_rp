@@ -1,7 +1,8 @@
 from icecream import ic
 
-from tpwt_p.param import get_param_json
 from tpwt_p import tpwt_flow
+from tpwt_p.param import get_param_json
+from tpwt_p.check import Check_In
 import tpwt_r
 
 
@@ -25,10 +26,22 @@ def evt_cut(patterns):
     data.cut_event(param.targets["cut_dir"], param.targets["evt_cat"], param.filter["time_delta"])  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
-def sac_format():
-    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], param.targets["evt_lst"], param.targets["sta_lst"])
-    sac.get_SAC(param.targets["sac"])
+def sac_format(info: tpwt_r.Info):
+    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], info.evt, info.sta)
+    sac.get_SAC(info.sac)
 
+
+def tpwt_check(data: str):
+    t = Check_In(data)
+    message = t.check_form()
+    ic(message)
+
+
+def mass_control(info):
+    data = tpwt_flow.Data_Filter(info.sac, info.evt, info.sta, param.snr, param.tcut, param.nsta)
+    data.tpwt_1()
+    data.tpwt_2()
+    data.tpwt_3()
 
 def tpwt_run(param_json: str):
     # start
@@ -39,24 +52,23 @@ def tpwt_run(param_json: str):
     param = get_param_json(param_json)
 
     # get event lst and cat from 30 to 120
-    [evt30, evt120] = param.targets["evt2"]
-    evts_from_30_to_120(evt30, evt120)
+    evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
 
-    # # data cut event
-    # search = ["*Z.sac", "*Z.SAC"]
-    # evt_cut(search)
+    # data cut event
+    search = ["*Z.sac", "*Z.SAC"]
+    evt_cut(search)
 
-    # # process sac files
-    # sac_format()
+    # bound sac evt and sta to info
+    info = tpwt_r.Info(param.targets)
 
-    # # check data format
-    # tpwt_check(param.sac)
+    # process sac files
+    sac_format(info)
+
+    # check data format
+    tpwt_check(info.data)
 
     # # mass control
-    # data = tpwt_flow.Data_Filter(param.sac, param.evt_lst, param.sta_lst, param.snr, param.tcut, param.nsta)
-    # data.tpwt_1()
-    # data.tpwt_2()
-    # data.tpwt_3()
+    # mass_control(info.data)
 
     # region = tpwt_r.Region(param.region)
     # # iterater

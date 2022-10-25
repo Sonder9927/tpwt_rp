@@ -1,4 +1,5 @@
 from pathlib import Path
+import pandas as pd
 import shutil
 
 
@@ -11,6 +12,7 @@ def get_binuse(c: str, bin_from='./'):
         e = f"The binary {b} doesn't exist."
         raise FileNotFoundError(e)
 
+###############################################################################
 
 def glob_patterns(method: str, path: Path, patterns: list) -> list:
     """
@@ -56,3 +58,18 @@ def remove_files(targets: list):
             shutil.rmtree(target)
         elif t.is_file():
             t.unlink()
+
+
+###############################################################################
+
+
+def read_xyz(f) -> pd.DataFrame:
+    return pd.read_csv(f, delim_whitespace=True, usecols=[0, 1, 2], header=None, names=["la", "lo", "vel"])
+
+def read_nxy(f) -> pd.DataFrame:
+    return pd.read_csv(f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"])
+
+
+###############################################################################
+
+
