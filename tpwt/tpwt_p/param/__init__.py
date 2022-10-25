@@ -1,4 +1,4 @@
-from .get_param import get_param_json
+from .param_state import Param
 
 
-__all__ = ["get_param_json"]
+__all__ = ["Param"]

@@ -72,7 +72,7 @@ def average_inner(grid_dir, ps):
     if tp == list:
         bp = ps
     elif tp == str:
-        check_exists(ps)
+        ps = check_exists(ps)
         bp = boundary_points(ps)
     else:
         raise ValueError("Unvalid input points. Please give a list or a string.")

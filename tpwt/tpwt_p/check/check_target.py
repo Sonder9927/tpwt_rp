@@ -1,10 +1,10 @@
 from pathlib import Path
 
 
-def check_exists(target):
+def check_exists(target) -> Path:
     t = Path(target)
     if t.exists():
-        pass
+        return t
     else:
         de = f"Target {target} not found."
         raise FileNotFoundError(de)

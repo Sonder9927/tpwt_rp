@@ -1,8 +1,9 @@
 from icecream import ic
 
 from tpwt_p import tpwt_flow
-from tpwt_p.param import get_param_json
+from tpwt_p.param import Param
 from tpwt_p.check import Check_In
+# from tpwt_p.info_per import period_info
 import tpwt_r
 
 
@@ -26,9 +27,9 @@ def evt_cut(patterns):
     data.cut_event(param.targets["cut_dir"], param.targets["evt_cat"], param.filter["time_delta"])  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
-def sac_format(info: tpwt_r.Info):
-    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], info.evt, info.sta)
-    sac.get_SAC(info.sac)
+def sac_format(ses: tpwt_r.SES):
+    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], ses.evt, ses.sta)
+    sac.get_SAC(ses.sac)
 
 
 def tpwt_check(data: str):
@@ -37,8 +38,8 @@ def tpwt_check(data: str):
     ic(message)
 
 
-def mass_control(info):
-    data = tpwt_flow.Data_Filter(info.sac, info.evt, info.sta, param.snr, param.tcut, param.nsta)
+def mass_control(ses: tpwt_r.SES):
+    data = tpwt_flow.Data_Filter(ses.sac, ses.evt, ses.sta, param.snr, param.tcut, param.nsta)
     data.tpwt_1()
     data.tpwt_2()
     data.tpwt_3()
@@ -49,23 +50,30 @@ def tpwt_run(param_json: str):
 
     global param
     # get parameters
-    param = get_param_json(param_json)
+    param = Param(param_json)
 
     # get event lst and cat from 30 to 120
-    evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
+    if not param.state.check_state("evts"):
+        evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
+        param.state.change_state("evts", True)
 
     # data cut event
-    search = ["*Z.sac", "*Z.SAC"]
-    evt_cut(search)
+    if not param.state.check_state("cut"):
+        search = ["*Z.sac", "*Z.SAC"]
+        evt_cut(search)
+        param.state.change_state("cut", True)
 
     # bound sac evt and sta to info
-    info = tpwt_r.Info(param.targets)
+    ses = tpwt_r.SES(param.targets)
 
     # process sac files
-    sac_format(info)
+    if not param.state.check_state("sac"):
+        sac_format(ses)
+        param.state.change_state("sac", True)
 
     # check data format
-    tpwt_check(info.data)
+    if param.state.check_state("check"):
+        tpwt_check(ses.data)
 
     # # mass control
     # mass_control(info.data)
@@ -86,6 +94,10 @@ def tpwt_run(param_json: str):
     # # checkboard
     # cb = tpwt_flow.Check_Board()
     # cb.check_board()
+
+    # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
+
+    # param.state.save()
 
 
 if __name__ == "__main__":
