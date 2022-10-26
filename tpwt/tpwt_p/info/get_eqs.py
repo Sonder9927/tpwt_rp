@@ -15,26 +15,35 @@ class Eq_Per:
 
     def grid(self) -> Path:
         ptn = r"grid.*"
-        if not self.grid_target:
+        try:
+            self.grid_target
+        except AttributeError:
             grids = glob_patterns("glob", Path(self.eq.parent), [ptn])
             grids = [i for i in grids if i.suffix != "ave"]
             if len(grids) == 1:
                 self.grid_target = grids[0]
             else:
                 raise FileNotFoundError(f"No unique target file found with pattern {ptn}")
+
         return self.grid_target
 
     def paths(self) -> list[Path]:
-        if not self.path_list:
+        try:
+            self.path_list
+        except AttributeError:
             lines = linecache.getlines(str(self.eq))
             linecache.clearcache()
             ps = [n for i in lines if (n := Path(i.replace("\n", "").replace(" ", ""))).suffix == "sac"]
             self.path_list = ps
+
         return self.path_list
 
     def avg_vel(self) -> float:
-        if not self.avgvel:
+        try:
+            self.avgvel
+        except AttributeError:
             self.avgvel = average(self.grid())
+
         return self.avgvel
 
     def avg_vel_inner(self, ps) -> float:

@@ -56,20 +56,17 @@ def tpwt_run(param_json: str):
     bp = param.bound_param()  # bp.data = Path(bp.sac)
 
     # get event lst and cat from 30 to 120
-    if not state.check_state("evts"):
+    if state.check_state("evts"):
         evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
-        state.change_state("evts", True)
 
     # data cut event
-    if not state.check_state("cut"):
+    if state.check_state("cut"):
         search = ["*Z.sac", "*Z.SAC"]
         evt_cut(search)
-        state.change_state("cut", True)
 
     # process sac files
-    if not state.check_state("sac"):
+    if state.check_state("sac"):
         sac_format(bp)
-        state.change_state("sac", True)
 
     # check data format
     if state.check_state("check"):
@@ -98,6 +95,7 @@ def tpwt_run(param_json: str):
 
     # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
 
+    # state.change_state("quanlity", False)
     # state.save()
 
 

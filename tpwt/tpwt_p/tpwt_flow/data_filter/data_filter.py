@@ -23,10 +23,12 @@ class Data_Filter:
         return "Flag GDM52 done."
 
     def aftan_snr(self, path):
-        if not self.path:
+        try:
+            self.path
+        except AttributeError:
             self.calculate_dispersion(path)
-
-        process_events_aftan_snr(self.bp.data, self.path, self.bp.work_dir)
+        finally:
+            process_events_aftan_snr(self.bp.data, self.path, self.bp.work_dir)
 
         return "Flag aftan_snr done."
 
@@ -39,8 +41,11 @@ class Data_Filter:
         self.eq_list = mk_eqlistper(self.bp, self.evts["sta"], self.stas)
 
     def eqlistper(self):
-        if not self.eq_list:
+        try: 
+            self.eq_list
+        except AttributeError:
             self.mk_eqlistper()
+
         return self.eq_list
         
 
