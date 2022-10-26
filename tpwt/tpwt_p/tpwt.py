@@ -27,9 +27,9 @@ def evt_cut(patterns):
     data.cut_event(param.targets["cut_dir"], param.targets["evt_cat"], param.filter["time_delta"])  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
-def sac_format(ses: tpwt_r.SES):
-    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], ses.evt, ses.sta)
-    sac.get_SAC(ses.sac)
+def sac_format(bp):
+    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], bp.evt, bp.sta)
+    sac.get_SAC(bp.sac)
 
 
 def tpwt_check(data: str):
@@ -38,11 +38,12 @@ def tpwt_check(data: str):
     ic(message)
 
 
-def mass_control(ses: tpwt_r.SES):
-    data = tpwt_flow.Data_Filter(ses.sac, ses.evt, ses.sta, param.snr, param.tcut, param.nsta)
-    data.tpwt_1()
-    data.tpwt_2()
-    data.tpwt_3()
+def quanlity_control(bp):
+    data = tpwt_flow.Data_Filter(bp, param.model["periods"])
+    data.aftan_snr(param.targets["path"])
+    data.sta_dist(bp.snr, bp.tcut)
+    eq = data.eqlistper()
+    return eq
 
 def tpwt_run(param_json: str):
     # start
@@ -51,34 +52,34 @@ def tpwt_run(param_json: str):
     global param
     # get parameters
     param = Param(param_json)
+    state = param.state()
+    bp = param.bound_param()  # bp.data = Path(bp.sac)
 
     # get event lst and cat from 30 to 120
-    if not param.state.check_state("evts"):
+    if not state.check_state("evts"):
         evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
-        param.state.change_state("evts", True)
+        state.change_state("evts", True)
 
     # data cut event
-    if not param.state.check_state("cut"):
+    if not state.check_state("cut"):
         search = ["*Z.sac", "*Z.SAC"]
         evt_cut(search)
-        param.state.change_state("cut", True)
-
-    # bound sac evt and sta to info
-    ses = tpwt_r.SES(param.targets)
+        state.change_state("cut", True)
 
     # process sac files
-    if not param.state.check_state("sac"):
-        sac_format(ses)
-        param.state.change_state("sac", True)
+    if not state.check_state("sac"):
+        sac_format(bp)
+        state.change_state("sac", True)
 
     # check data format
-    if param.state.check_state("check"):
-        tpwt_check(ses.data)
+    if state.check_state("check"):
+        tpwt_check(bp.sac)
 
     # mass control
-    # region = tpwt_r.Region(param.region)
-    mass_control(ses.data)
+    if state.check_state("control"):
+        eq = quanlity_control(bp)
 
+    # region = tpwt_r.Region(param.region)
     # # iterater
     # tpwt = tpwt_flow.TPWT_Iter(region, smooth, damping)
     # # tpwt.step_4()
@@ -97,7 +98,7 @@ def tpwt_run(param_json: str):
 
     # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
 
-    # param.state.save()
+    # state.save()
 
 
 if __name__ == "__main__":
