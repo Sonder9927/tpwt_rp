@@ -40,10 +40,12 @@ def tpwt_check(data: str):
 
 def quanlity_control(bp):
     data = tpwt_flow.Data_Filter(bp, param.model["periods"])
-    data.aftan_snr(param.targets["path"])
-    data.sta_dist(bp.snr, bp.tcut)
-    eq = data.eqlistper()
-    return eq
+    # data.aftan_snr(param.targets["path"])
+    snr = param.filter["snr"][2]  # 15
+    tcut = param.filter["tcut"][2]  # 8
+    data.sta_dist(snr, tcut)
+    # eq = data.eqlistper()
+    return "eq"
 
 def tpwt_run(param_json: str):
     # start
@@ -56,20 +58,20 @@ def tpwt_run(param_json: str):
     bp = param.bound_param()  # bp.data = Path(bp.sac)
 
     # get event lst and cat from 30 to 120
-    if not state.check_state("evts"):
+    if state.check_state("evts"):
         evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
-        state.change_state("evts", True)
+        state.change_state("evts", False)
 
     # data cut event
-    if not state.check_state("cut"):
+    if state.check_state("cut"):
         search = ["*Z.sac", "*Z.SAC"]
         evt_cut(search)
-        state.change_state("cut", True)
+        state.change_state("cut", False)
 
     # process sac files
-    if not state.check_state("sac"):
+    if state.check_state("sac"):
         sac_format(bp)
-        state.change_state("sac", True)
+        state.change_state("sac", False)
 
     # check data format
     if state.check_state("check"):
@@ -78,6 +80,8 @@ def tpwt_run(param_json: str):
     # mass control
     if state.check_state("control"):
         eq = quanlity_control(bp)
+        ic(eq)
+        # state.change_state("control", False)
 
     # region = tpwt_r.Region(param.region)
     # # iterater
