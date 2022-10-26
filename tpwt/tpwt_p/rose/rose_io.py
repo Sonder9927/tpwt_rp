@@ -4,7 +4,7 @@ import shutil
 
 
 # get bin for using
-def get_binuse(c: str, bin_from='./'):
+def get_binuse(c: str, bin_from='./') -> Path:
     b = Path(bin_from) / 'TPWT/bin' / c
     if b.exists():
         return b
@@ -37,6 +37,38 @@ def glob_patterns(method: str, path: Path, patterns: list) -> list:
         raise FileNotFoundError(e)
 
 
+###############################################################################
+
+
+def get_dirname(target: str, *args):
+    de = "Please give a list of arguments for "
+    if target == "TPWT" or target == "tpwt":
+        if len(args) == 4:
+            [snr, tcut, smooth, damping] = args
+            return get_tpwt_dirname(snr, tcut, smooth, damping)
+        else:
+            raise KeyError(de + "[snr, tcut, smooth, damping]")
+    elif target == "sec":
+        if len(args) == 3:
+            [period, snr, dist] = args
+            return get_sec_dirname(period, snr, dist)
+        else:
+            raise KeyError(de + "[period, snr, dist]")
+    else:
+        raise KeyError(f"No target found for `{target}`.")
+
+
+def get_sec_dirname(period, snr, dist) -> Path:
+    return Path(f'{period}sec_{snr}snr_{dist}dis')
+
+
+def get_tpwt_dirname(snr, tcut, smooth, damping) -> Path:
+    return Path(f'TPWT_{snr}_snr_{tcut}tcut_{smooth}smooth_{damping}damping')
+
+
+###############################################################################
+
+
 def re_create_dir(target: str):
     """
     Re-create the dir given if it exists, or create it.
@@ -63,10 +95,11 @@ def remove_files(targets: list):
 ###############################################################################
 
 
-def read_xyz(f) -> pd.DataFrame:
-    return pd.read_csv(f, delim_whitespace=True, usecols=[0, 1, 2], header=None, names=["la", "lo", "vel"])
+def read_xyz(f, ns: list[str]) -> pd.DataFrame:
+    return pd.read_csv(f, delim_whitespace=True, usecols=[0, 1, 2], header=None, names=ns)
 
-def read_nxy(f) -> pd.DataFrame:
+
+def read_xy(f) -> pd.DataFrame:
     return pd.read_csv(f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"])
 
 

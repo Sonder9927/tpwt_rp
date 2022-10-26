@@ -25,7 +25,7 @@
     ],
     "time_delta": 10800,
     "dist": 3500,
-    "nsta_cutoff": 20,
+    "nsta": 20,
     "stacut_per": 0.7,
     "ampcut": 2,
     "tevtrmscut": 8.0,
@@ -91,6 +91,10 @@
       "east": 122.5,
       "south": 29,
       "north": 32.6
-    }
+    },
+    "ref_sta": [
+      122.2,
+      32.3
+    ]
   }
 }

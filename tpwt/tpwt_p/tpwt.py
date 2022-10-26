@@ -75,10 +75,10 @@ def tpwt_run(param_json: str):
     if param.state.check_state("check"):
         tpwt_check(ses.data)
 
-    # # mass control
-    # mass_control(info.data)
-
+    # mass control
     # region = tpwt_r.Region(param.region)
+    mass_control(ses.data)
+
     # # iterater
     # tpwt = tpwt_flow.TPWT_Iter(region, smooth, damping)
     # # tpwt.step_4()

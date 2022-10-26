@@ -1,4 +1,4 @@
-from .param_state import Param
+from .param import Param
 
 
 __all__ = ["Param"]

@@ -6,7 +6,8 @@ def average(f) -> float:
     read the velocity and calculate the average value
     return avevel and title
     '''
-    df = read_xyz(f)
+    ns = ["lo", "la", "vel"]
+    df = read_xyz(f, ns)
     avgvel = df.vel.sum() / len(df)
     return avgvel
 
