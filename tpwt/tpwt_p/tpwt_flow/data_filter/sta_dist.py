@@ -1,4 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import subprocess
 
@@ -9,11 +9,20 @@ from tpwt_p.gmt import gmt_amp, gmt_phase_time
 def process_periods_sta_dist(bp, periods: list, work: Path):
     # re-create directory 'all_events'
     re_create_dir(Path(bp.all_events))
+    print(periods)
 
     # process every period
-    n = len(periods)
-    with ProcessPoolExecutor(max_workers=4) as pool:
-        pool.map(process_period_sta_dist, [bp]*n, periods, [work]*n)
+    def process_period_sta_dist(period):
+        """
+        batch function for process_periods_sta_dist
+        """
+        # bind period to bp
+        bp.set_period(period)
+        calc_distance_find_eq(bp)
+        plot_events_phase_time_and_amp(bp, work)
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        pool.map(process_period_sta_dist, periods)
 
 
 ###############################################################################
@@ -26,8 +35,8 @@ def calc_distance_find_eq(p):
     cmd_string = 'echo shell start\n'
     cmd_string += f'{calc_distance_eq} {p.evt} {p.sta} {p.sac}/\n'
     cmd_string += f'{find_phvel_amp_eq} '
-    cmd_string += f'{p.period} sta_dist.lst {p.snr} {p.dist} {p.sac}/\n'
-    cmd_string += f'mv {p.period}sec_{p.snr}snr_{p.dist}dis {p.all_events}/\n'
+    cmd_string += f'{p.period} target/sta_dist.lst {p.snr} {p.dist} {p.sac}/\n'
+    cmd_string += f'mv {get_dirname("sec", p.period, p.snr, p.tcut)} {p.all_events}/\n'
     cmd_string += 'echo shell end'
     subprocess.Popen(
         ['bash'],
@@ -69,23 +78,14 @@ def plot_event_phase_time_and_amp(p, event: Path, work: Path):
         
 
 def plot_events_phase_time_and_amp(p, work):
+    print("?")
     sec = Path(p.all_events / get_dirname("sec", p.period, p.snr, p.dist))
     events = glob_patterns("glob", sec, ["*ph.txt", "_v1"])
 
     # process every event
     # cannot use Thread
     n = len(events)
-    with ProcessPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         pool.map(plot_event_phase_time_and_amp, [p]*n, events, [work]*n)
 
 
-def process_period_sta_dist(bp, period, work):
-    """
-    batch function for process_periods_sta_dist
-    """
-    # bind period to bp
-    bp.set_period(period)
-
-    calc_distance_find_eq(bp)
-
-    plot_events_phase_time_and_amp(bp, work)

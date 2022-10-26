@@ -5,8 +5,8 @@ import pandas as pd
 
 class Evt_Make:
     def __init__(self, evt1, evt2):
-        self.evt1 = pd.read_csv(evt1, usecols=["time", "latitude", "longitude"])
-        self.evt2 = pd.read_csv(evt2, usecols=["time", "latitude", "longitude"])
+        self.evt1 = pd.read_csv(evt1, usecols=["time", "latitude", "longitude", "depth"])
+        self.evt2 = pd.read_csv(evt2, usecols=["time", "latitude", "longitude", "depth"])
         self.state = "NONE"
         ic("Hello, this is EVT maker.")
 
