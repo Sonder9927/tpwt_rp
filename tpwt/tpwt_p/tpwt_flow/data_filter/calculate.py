@@ -73,21 +73,21 @@ def mk_pathfile_TPWT(sta1, sta2, pathfile):
     f = open(pathfile, 'w+')
     for i in range(len(sta1)):
         for j in range(len(sta2)):
-            rad = np.cos(d(sta1[i].la)) \
-                    * np.cos(d(sta2[j].la)) \
-                    + np.sin(d(sta1[i].la)) \
-                    * np.sin(d(sta2[j].la)) \
+            rad = np.cos(d(sta1.la[i])) \
+                    * np.cos(d(sta2.la[j])) \
+                    + np.sin(d(sta1.la[i])) \
+                    * np.sin(d(sta2.la[j])) \
                     * np.cos(convdeg * (
-                                     sta1[i].lo - sta2[j].lo
+                                     sta1.lo[i] - sta2.lo[j]
                                  ))
 
             dist = np.arccos(rad) * erad
 
             content = f'{itemp:>12}\n'
             content += f'{i+1:>5}{j+1:>5} '
-            content += f'{sta1[i].sta:<18} {sta2[j].sta:<8}'
-            content += f'{sta1[i].la:10.4f}{sta1[i].lo:10.4f}'
-            content += f'{sta2[j].la:10.4f}{sta2[j].lo:10.4f}'
+            content += f'{sta1.sta[i]:<18} {sta2.sta[j]:<8}'
+            content += f'{sta1.la[i]:10.4f}{sta1.lo[i]:10.4f}'
+            content += f'{sta2.la[j]:10.4f}{sta2.lo[j]:10.4f}'
             content += f'{dist:12.2f}\n'
 
             f.write(content)

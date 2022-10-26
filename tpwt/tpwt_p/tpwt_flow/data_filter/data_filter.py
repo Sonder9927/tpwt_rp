@@ -13,6 +13,8 @@ class Data_Filter:
         self.evts = read_xyz(self.bp.evt, ['sta', 'lo', 'la'])
         self.stas = read_xyz(self.bp.sta, ['sta', 'lo', 'la'])
         self.periods = periods
+        self.path = None
+        self.eq_list = None
 
     def calculate_dispersion(self, path, disp_list=[]):
         """
@@ -23,12 +25,10 @@ class Data_Filter:
         return "Flag GDM52 done."
 
     def aftan_snr(self, path):
-        try:
-            self.path
-        except AttributeError:
+        if not self.path:
             self.calculate_dispersion(path)
-        finally:
-            process_events_aftan_snr(self.bp.data, self.path, self.bp.work_dir)
+
+        process_events_aftan_snr(self.bp.data, self.path, self.bp.work_dir)
 
         return "Flag aftan_snr done."
 
@@ -41,9 +41,7 @@ class Data_Filter:
         self.eq_list = mk_eqlistper(self.bp, self.evts["sta"], self.stas)
 
     def eqlistper(self):
-        try: 
-            self.eq_list
-        except AttributeError:
+        if self.eq_list:
             self.mk_eqlistper()
 
         return self.eq_list

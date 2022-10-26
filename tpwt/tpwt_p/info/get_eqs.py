@@ -15,9 +15,7 @@ class Eq_Per:
 
     def grid(self) -> Path:
         ptn = r"grid.*"
-        try:
-            self.grid_target
-        except AttributeError:
+        if self.grid_target:
             grids = glob_patterns("glob", Path(self.eq.parent), [ptn])
             grids = [i for i in grids if i.suffix != "ave"]
             if len(grids) == 1:
@@ -28,9 +26,7 @@ class Eq_Per:
         return self.grid_target
 
     def paths(self) -> list[Path]:
-        try:
-            self.path_list
-        except AttributeError:
+        if self.path_list:
             lines = linecache.getlines(str(self.eq))
             linecache.clearcache()
             ps = [n for i in lines if (n := Path(i.replace("\n", "").replace(" ", ""))).suffix == "sac"]
@@ -39,9 +35,7 @@ class Eq_Per:
         return self.path_list
 
     def avg_vel(self) -> float:
-        try:
-            self.avgvel
-        except AttributeError:
+        if self.avgvel:
             self.avgvel = average(self.grid())
 
         return self.avgvel
