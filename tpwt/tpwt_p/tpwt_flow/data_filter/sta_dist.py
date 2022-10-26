@@ -19,10 +19,10 @@ def process_periods_sta_dist(bp, periods: list, work: Path):
     cmd_string += f'{calc_distance_eq} {bp.evt} {bp.sta} {bp.sac}/ {sta_dist}\n'
     cmd_string += 'echo shell end'
 
-    subprocess.Popen(
-        ['bash'],
-        stdin = subprocess.PIPE
-    ).communicate(cmd_string.encode())
+    # subprocess.Popen(
+    #     ['bash'],
+    #     stdin = subprocess.PIPE
+    # ).communicate(cmd_string.encode())
 
     # process every period
     def process_period_sta_dist(period):
@@ -30,8 +30,9 @@ def process_periods_sta_dist(bp, periods: list, work: Path):
         batch function for process_periods_sta_dist
         """
         # bind period to bp
-        calc_distance_find_eq(bp, sta_dist, period)
+        # calc_distance_find_eq(bp, sta_dist, period)
         plot_events_phase_time_and_amp(bp, period, work)
+        ic()
 
     # periods = [20, 25, 26]
     with ThreadPoolExecutor(max_workers=5) as pool:
@@ -56,7 +57,12 @@ def calc_distance_find_eq(p, sta_dist, period):
 
 def plot_events_phase_time_and_amp(p, period, work):
     sec = Path(p.all_events / get_dirname("sec", period, p.snr, p.dist))
-    events = glob_patterns("glob", sec, ["*ph.txt", "_v1"])
+
+    try:
+        events = glob_patterns("glob", sec, ["*ph.txt", "_v1"])
+    except FileNotFoundError as error:
+        print(error)
+        return
 
     # process every event
     # cannot use Thread
