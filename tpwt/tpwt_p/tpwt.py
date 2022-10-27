@@ -28,7 +28,7 @@ def evt_cut(patterns):
 
 
 def sac_format(bp):
-    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], bp.evt, bp.sta)
+    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], evt=bp.evt, sta=bp.sta)
     sac.get_SAC(bp.sac)
 
 
@@ -40,7 +40,7 @@ def tpwt_check(data: str):
 
 def quanlity_control(bp):
     data = tpwt_flow.Data_Filter(bp, param.model["periods"])
-    # data.aftan_snr(param.targets["path"])
+    data.aftan_snr(param.targets["path"])
     snr = param.filter["snr"][2]  # 15
     tcut = param.filter["tcut"][2]  # 8
     data.sta_dist(snr, tcut)
@@ -63,7 +63,7 @@ def tpwt_run(param_json: str):
         state.change_state("evts", False)
 
     # data cut event
-    if not state.check_state("cut"):
+    if state.check_state("cut"):
         search = ["*Z.sac", "*Z.SAC"]
         evt_cut(search)
         state.change_state("cut", False)
@@ -81,8 +81,8 @@ def tpwt_run(param_json: str):
 
     # mass control
     if state.check_state("control"):
-        # eq = quanlity_control(bp)
-        ic()
+        eq = quanlity_control(bp)
+        ic(eq)
         # state.change_state("control", False)
 
     # region = tpwt_r.Region(param.region)
@@ -98,12 +98,15 @@ def tpwt_run(param_json: str):
     # # tpwt.kern160()
     # tpwt.kern360()
 
-    # # checkboard
-    # cb = tpwt_flow.Check_Board()
-    # cb.check_board()
+    # state.save()
 
-    # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
+    # # # checkboard
+    # # cb = tpwt_flow.Check_Board()
+    # # cb.check_board()
 
+    # # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
+
+    # state.save()
 
 
 if __name__ == "__main__":
