@@ -40,6 +40,7 @@ def tpwt_check(data: str):
 
 def quanlity_control(bp):
     data = tpwt_flow.Data_Filter(bp, param.model["periods"])
+    data.path = param.targets["path"]
     data.aftan_snr(param.targets["path"])
     snr = param.filter["snr"][2]  # 15
     tcut = param.filter["tcut"][2]  # 8
