@@ -76,9 +76,15 @@ def plot_events_phase_time_and_amp(bp, period, correct_tt_select_data):
     except FileNotFoundError as error:
         print(error)
         return
-    Param_phase = namedtuple("Param_phase", "bp period event correct_tt_select_data")
+    Param_phase = namedtuple("Param_phase",
+        "region nsta stacut ref_lo ref_la tcut "
+        "period event correct_tt_select_data")
+        
 
-    ps = [Param_phase(bp, period, e, correct_tt_select_data) for e in events]
+    ps = [Param_phase(
+        bp.region.original(), bp.nsta, bp.stacut,
+        bp.ref_sta.lo, bp.ref_sta.la, bp.tcut,
+        period, e, correct_tt_select_data) for e in events]
     with ThreadPoolExecutor(max_workers=10) as pool:
         pool.map(plot_event_phase_time_and_amp, ps)
 
@@ -93,12 +99,11 @@ def plot_event_phase_time_and_amp(p):
     """
     stanum = len(open(p.event, 'r').readlines())
 
-    if stanum >= p.bp.nsta:
-
+    if stanum >= p.nsta:
         cmd_string = 'echo shell start\n'
         cmd_string += f'{p.correct_tt_select_data} '
-        cmd_string += f'{p.event} {p.period} {p.bp.nsta} {p.bp.stacut} '
-        cmd_string += f'{p.bp.ref_sta.lo} {p.bp.ref_sta.la} {p.bp.tcut}\n'
+        cmd_string += f'{p.event} {p.period} {p.nsta} {p.stacut} '
+        cmd_string += f'{p.ref_lo} {p.ref_la} {p.tcut}\n'
         cmd_string += 'echo shell end'
         subprocess.Popen(
             ['bash'],
@@ -107,10 +112,8 @@ def plot_event_phase_time_and_amp(p):
 
         # chdir!!!!!!!!!!!!!!!!!
 
-        region = p.bp.region.original()
-
-        gmt_phase_time(str(p.event), region)
-        gmt_amp(p.event, region)
+        gmt_phase_time(str(p.event), p.region)
+        gmt_amp(p.event, p.region)
 
         # event_v1 = Path(event.parent) / (event.name + '_v1')
         # if event_v1.exists():
