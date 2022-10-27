@@ -66,27 +66,6 @@ class Sac_Format:
         ic("batch processing...")
         Pool(10).map(batch_event, ps)
 
-    def ch_sac(self, target: Path):
-        """
-        change head of sac file to generate dist information
-        """
-        # ch evla, evlo, evdp(optional) and stla, stlo, stel(optional)
-        [evt_name, sta_name, _] = target.stem.split('.')
-
-        s = "wild echo off \n"
-        s += "r {} \n".format(target)
-        s += f"ch evla {self.evt.la[evt_name]}\n"
-        s += f"ch evlo {self.evt.lo[evt_name]}\n"
-        # s += "ch evdp {}\n".format(self.evt['dp'][evt_name])
-        s += f"ch stla {self.sta.la[sta_name]}\n"
-        s += f"ch stlo {self.sta.lo[sta_name]}\n"
-        # s += f"ch stel {self.sta['dp'][sta_name]}\n"
-        s += f"ch kcmpnm {self.channel}\n"
-        s += "wh \n"
-        s += "q \n"
-
-        os.putenv("SAC_DISPLAY_COPYRIGHT", "0")
-        subprocess.Popen(['sac'], stdin=subprocess.PIPE).communicate(s.encode())
 
 def batch_event(p):
     """
@@ -106,7 +85,20 @@ def batch_event(p):
 
 
 ###############################################################################
+"""
+batch function
+"""
 
+def rename_ch(p: Param_evt, sac):
+    # rename
+    res = format_sac_name(sac, p.channel)
+    shutil.move(sac, res.sac)
+
+    # change head
+    ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
+    # ch_sac(res.sac, p.evt, p.stas[res.sta], p.channel)
+
+###############################################################################
 
 def format_sac_name(target: Path, channel):
     """
@@ -132,10 +124,22 @@ def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
     obs.ch_obs()
 
 
-def rename_ch(p: Param_evt, sac):
-    # rename
-    res = format_sac_name(sac, p.channel)
-    shutil.move(sac, res.sac)
+def ch_sac(target: Path, evt, sta, channel):
+    """
+    change head of sac file to generate dist information
+    """
+    # ch evla, evlo, evdp(optional) and stla, stlo, stel(optional)
+    s = "wild echo off \n"
+    s += "r {} \n".format(target)
+    s += f"ch evla {evt.la}\n"
+    s += f"ch evlo {evt.lo}\n"
+    # s += "ch evdp {}\n".format(self.evt['dp'][evt_name])
+    s += f"ch stla {sta.la}\n"
+    s += f"ch stlo {sta.lo}\n"
+    # s += f"ch stel {self.sta['dp'][sta_name]}\n"
+    s += f"ch kcmpnm {channel}\n"
+    s += "wh \n"
+    s += "q \n"
 
-    # change head
-    ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
+    os.putenv("SAC_DISPLAY_COPYRIGHT", "0")
+    subprocess.Popen(['sac'], stdin=subprocess.PIPE).communicate(s.encode())
