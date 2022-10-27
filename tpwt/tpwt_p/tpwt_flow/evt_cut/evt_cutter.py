@@ -1,4 +1,5 @@
 from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 from collections import namedtuple
 from pathlib import Path
 from icecream import ic
@@ -8,6 +9,12 @@ import obspy
 import subprocess
 
 from tpwt_p import rose
+
+
+Param_Z = namedtuple("Param_Z", "target_z zfile")
+
+Param_cut = namedtuple("Param_cut", "id sacs mktraceiodb cutevent cat time_delta target_cut")
+
 
 class Evt_Cut:
     def __init__(self, data: str) -> None:
@@ -30,11 +37,11 @@ class Evt_Cut:
 
         zfiles = rose.glob_patterns("rglob", self.data, patterns)
 
-        Param_Z = namedtuple("Param_Z", "target_z zfile")
-        ps = [Param_Z(self.target_z, z) for z in zfiles]
+        ps = [(Param_Z(self.target_z, z)) for z in zfiles]
 
-        with ProcessPoolExecutor(max_workers=10) as pool:
-            tqdm(pool.map(batch_1Hz, ps))
+        # Pool(10).map(batch_1Hz, ps)
+        for _ in tqdm(Pool(10).imap(batch_1Hz, ps)):
+            pass
 
     def cut_event(self, target, cat, time_delta, cut_from=None, patterns=[]):
         """
@@ -60,37 +67,35 @@ class Evt_Cut:
         batch = 1_000
         sacs_batch_list = [sacs[i: i+batch] for i in range(0, len(sacs), batch)]
 
-        Param_cut = namedtuple("Param_cut", "sacs id mktraceiodb cutevent cat time_delta target_cut")
         ps = [
             Param_cut(
-                i, s, mktraceiodb, cutevent, cat, time_delta, self.target_cut
+                i+1, s, mktraceiodb, cutevent, cat, time_delta, self.target_cut
             ) for i, s in enumerate(sacs_batch_list)
         ]
 
-        with ProcessPoolExecutor(max_workers=10) as pool:
-            tqdm(pool.map(batch_cut_event, ps))
+        # Pool(10).map(batch_1Hz, ps)
+        Pool(10).map(batch_cut_event, ps)
 
 
+# batch function
 ###############################################################################
 
 
-def batch_1Hz(p):
+def batch_1Hz(p: Param_Z):
     """
     batch function for get_Z_1Hz 
     to down sample every target file
     which will be putted into z_dir
     """
-    file_z = p.target_z / p.file_path.name
-    ic(file_z)
-    # decimate_sac(file_path, file_z)
-    decimate_obspy(p.file_path, str(file_z))
+    file_z = p.target_z / p.zfile.name
+    # decimate_sac(p.zfile, file_z)
+    decimate_obspy(p.zfile, str(file_z))
 
 
-def batch_cut_event(p):
+def batch_cut_event(p: Param_cut):
     """
     batch function for cut_event 
     """
-    ic(p.id)
     lst = f"data_z.lst_{p.id}"
     db = f"data_z.db_{p.id}"
     done_lst = f"done_z.lst_{p.id}"
@@ -99,6 +104,7 @@ def batch_cut_event(p):
         for sac in p.sacs:
             f.write(f"{sac}\n")
 
+    ic(p.id)
     cmd_string = 'echo shell start\n'
     cmd_string += f'{p.mktraceiodb} -L {done_lst} -O {db} -LIST {lst} -V\n'  # no space at end!
     cmd_string += f'{p.cutevent} '
@@ -109,7 +115,7 @@ def batch_cut_event(p):
         stdin = subprocess.PIPE
     ).communicate(cmd_string.encode())
 
-    rose.remove_files([lst, db, done_lst])
+    rose.remove_targets([lst, db, done_lst])
 
 
 ###############################################################################

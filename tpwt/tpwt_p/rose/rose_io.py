@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import shutil
 
+from tpwt_p.check import check_protective
 
 # get bin for using
 def get_binuse(c: str, bin_from='./') -> Path:
@@ -28,7 +29,7 @@ def glob_patterns(method: str, path: Path, patterns: list) -> list:
             lst += list(path.glob(pattern))
     else:
         e = f"Please use 'glob' or 'rglob' to find files with patterns."
-        raise AttributeError(e)
+        raise KeyError(e)
 
     if lst:
         return lst
@@ -69,23 +70,23 @@ def get_tpwt_dirname(snr, tcut, smooth, damping) -> Path:
 ###############################################################################
 
 
-def re_create_dir(target: str):
+def re_create_dir(target):
     """
     Re-create the dir given if it exists, or create it.
     """
-    d = Path(target)
+    d = check_protective(target)
     if d.exists():
         shutil.rmtree(d)
     d.mkdir(parents=True)
     return d
 
 
-def remove_files(targets: list):
+def remove_targets(targets: list):
     """
     remove a list of targets
     """
     for target in targets:
-        t = Path(target)
+        t = check_protective(target)
         if t.is_dir():
             shutil.rmtree(target)
         elif t.is_file():

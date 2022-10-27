@@ -63,7 +63,7 @@ def tpwt_run(param_json: str):
         state.change_state("evts", False)
 
     # data cut event
-    if state.check_state("cut"):
+    if not state.check_state("cut"):
         search = ["*Z.sac", "*Z.SAC"]
         evt_cut(search)
         state.change_state("cut", False)
@@ -73,14 +73,16 @@ def tpwt_run(param_json: str):
         sac_format(bp)
         state.change_state("sac", False)
 
+    state.save()
+
     # check data format
     if state.check_state("check"):
         tpwt_check(bp.sac)
 
     # mass control
     if state.check_state("control"):
-        eq = quanlity_control(bp)
-        ic(eq)
+        # eq = quanlity_control(bp)
+        ic()
         # state.change_state("control", False)
 
     # region = tpwt_r.Region(param.region)
@@ -102,7 +104,6 @@ def tpwt_run(param_json: str):
 
     # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
 
-    # state.save()
 
 
 if __name__ == "__main__":
