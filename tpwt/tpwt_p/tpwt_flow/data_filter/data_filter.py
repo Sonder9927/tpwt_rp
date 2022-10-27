@@ -35,7 +35,7 @@ class Data_Filter:
     def sta_dist(self, snr, tcut):
         # set snr and tcut
         self.bp.set_snr_tcut(snr, tcut)
-        process_periods_sta_dist(self.bp, self.periods, self.bp.work_dir)
+        process_periods_sta_dist(self.bp, self.periods)
 
     def mk_eqlistper(self):
         self.eq_list = mk_eqlistper(self.bp, self.evts["sta"], self.stas)
