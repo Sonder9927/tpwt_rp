@@ -2,7 +2,6 @@ from pathlib import Path
 import pandas as pd
 import shutil
 
-from tpwt_p.check import check_protective
 
 # get bin for using
 def get_binuse(c: str, bin_from='./') -> Path:
@@ -74,11 +73,20 @@ def re_create_dir(target):
     """
     Re-create the dir given if it exists, or create it.
     """
-    d = check_protective(target)
+    d = protective(target)
     if d.exists():
         shutil.rmtree(d)
     d.mkdir(parents=True)
     return d
+
+
+def protective(target) -> Path:
+    protects = ["TPWT", "target", "tpwt_p", "tpwt_r", "justfile"]
+    if str(target) in protects:
+        err = rf"`{target}` is protective."
+        raise PermissionError(err)
+    else:
+        return Path(target)
 
 
 def remove_targets(targets: list):
@@ -86,7 +94,7 @@ def remove_targets(targets: list):
     remove a list of targets
     """
     for target in targets:
-        t = check_protective(target)
+        t = protective(target)
         if t.is_dir():
             shutil.rmtree(target)
         elif t.is_file():
@@ -105,5 +113,3 @@ def read_xy(f) -> pd.DataFrame:
 
 
 ###############################################################################
-
-
