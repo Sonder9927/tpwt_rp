@@ -1,6 +1,6 @@
 {
-  "evts": false,
-  "cut": false,
+  "evts": true,
+  "cut": true,
   "sac": false,
   "check": true,
   "GDM52": false,

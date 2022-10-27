@@ -27,10 +27,10 @@ from .obs_mod import Obs
 
 
 class Sac_Format:
-    def __init__(self, data, evt, sta) -> None:
+    def __init__(self, data, *, evt, sta) -> None:
         self.data = Path(data)
         self.channel = "LHZ"
-        self.evt = pd.read_csv(evt, delim_whitespace=True, names=["evt", "lo", "la"], dtype={"evt": str}, index_col="evt")
+        self.evt = pd.read_csv(evt, delim_whitespace=True, names=["evt", "lo", "la", "dp"], dtype={"evt": str}, index_col="evt")
         self.sta = pd.read_csv(sta, delim_whitespace=True, names=["sta", "lo", "la"], index_col="sta")
         ic(f"Hello, this is SAC formatter")
         ic(self.channel)
