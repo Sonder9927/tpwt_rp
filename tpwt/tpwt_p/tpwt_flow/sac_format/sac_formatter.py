@@ -16,6 +16,8 @@ Then add information of both event and station to head of sac files in SAC direc
 '''
 
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
+from collections import namedtuple
 from pathlib import Path
 from icecream import ic
 import pandas as pd
@@ -26,6 +28,13 @@ from tpwt_p.rose import glob_patterns, re_create_dir
 from .obs_mod import Obs
 
 
+Param_evt = namedtuple("Param_evt", "out_dir cut_evt evt stas channel")
+
+class Pos:
+    def __init__(self, x, y) -> None:
+        self.lo = x
+        self.la = y
+
 class Sac_Format:
     def __init__(self, data, *, evt, sta) -> None:
         self.data = Path(data)
@@ -35,47 +44,27 @@ class Sac_Format:
         ic(f"Hello, this is SAC formatter")
         ic(self.channel)
 
+    def evt_to_point(self, evt: str) -> Pos:
+        return Pos(x=self.evt.lo[evt], y=self.evt.la[evt])
+
+    def sta_to_points(self) -> dict[str, Pos]:
+        dl = self.sta.index
+        dd = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dl]
+        return dict(zip(dl, dd))
+
     def get_SAC(self, target):
         # clear and re-create
         self.target = re_create_dir(target)
 
         # get list of events directories
         cut_evts = glob_patterns("glob", self.data, ["*/**"])
+        stas = self.sta_to_points()
 
-        def batch_event(cut_evt):
-            """
-            batch function to process every event
-            move events directories
-            format sac files
-            """
-            # move
-            sac_evt = self.target / cut_evt.name[:12]
-            shutil.copytree(cut_evt, sac_evt)
-
-            # rename
-            sacs = glob_patterns("glob", sac_evt, ["*"])
-            for sac in sacs:
-                sac_new = format_sac_name(sac, self.channel)
-                shutil.move(sac, sac_new)
-                self.ch_obspy(sac_new)
+        ps = [Param_evt(self.target, i, self.evt_to_point(i.name[:12]), stas, self.channel) for i in cut_evts]
 
         # batch process
         ic("batch processing...")
-        with ThreadPoolExecutor(max_workers=4) as pool:
-            pool.map(batch_event, cut_evts)
-
-    def ch_obspy(self, target: Path):
-        """
-        change head of sac file to generate dist information
-        """
-        # ch evla, evlo, evdp(optional) and stla, stlo, stel(optional)
-        [evt_name, sta_name, _] = target.stem.split('.')
-
-        ep = [self.evt.lo[evt_name], self.evt.la[evt_name]]
-        sp = [self.sta.lo[sta_name], self.sta.la[sta_name]]
-        obs = Obs(target, ep, sp, self.channel)
-        # change the original file if no argument given
-        obs.ch_obs()
+        Pool(10).map(batch_event, ps)
 
     def ch_sac(self, target: Path):
         """
@@ -99,8 +88,27 @@ class Sac_Format:
         os.putenv("SAC_DISPLAY_COPYRIGHT", "0")
         subprocess.Popen(['sac'], stdin=subprocess.PIPE).communicate(s.encode())
 
+def batch_event(p):
+    """
+    batch function to process every event
+    move events directories
+    format sac files
+    """
+    # move
+    sac_evt = p.out_dir / p.cut_evt.name[:12]
+    shutil.copytree(p.cut_evt, sac_evt)
 
-def format_sac_name(target, channel):
+    # process every sac file
+    sacs = glob_patterns("glob", sac_evt, ["*"])
+
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        pool.map(rename_ch, [p]*len(sacs), sacs)
+
+
+###############################################################################
+
+
+def format_sac_name(target: Path, channel):
     """
     rename and ch sac files
     """
@@ -109,4 +117,25 @@ def format_sac_name(target, channel):
     new_name = f"{evt_name}.{sta_name}.{channel}.sac"
 
     target_new = target.parent / new_name
-    return target_new
+
+    Param_sac = namedtuple("Param_sac", "sta sac")
+
+    return Param_sac(sta_name, target_new)
+
+
+def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
+    """
+    change head of sac file to generate dist information
+    """
+    # ch evla, evlo, evdp(optional) and stla, stlo, stel(optional)
+    obs = Obs(target, evt, sta, channel)
+    obs.ch_obs()
+
+
+def rename_ch(p: Param_evt, sac):
+    # rename
+    res = format_sac_name(sac, p.channel)
+    shutil.move(sac, res.sac)
+
+    # change head
+    ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)

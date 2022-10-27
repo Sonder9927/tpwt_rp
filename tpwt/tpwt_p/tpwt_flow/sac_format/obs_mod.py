@@ -1,11 +1,9 @@
 import obspy
 
-from tpwt_r import Point
-
 class Obs:
-    def __init__(self, target, evt: list, sta: list, channel: str) -> None:
-        self.evt = Point(evt)
-        self.sta = Point(sta)
+    def __init__(self, target, evt, sta, channel: str) -> None:
+        self.evt = evt
+        self.sta = sta
         self.channel = channel
         self.target = target
         st = obspy.read(self.target)
