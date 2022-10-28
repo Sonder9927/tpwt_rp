@@ -8,7 +8,9 @@ from tpwt_p.rose import glob_patterns, get_binuse, get_dirname, re_create_dir
 from tpwt_p.gmt import gmt_amp, gmt_phase_time
 
 
-Param_dist = namedtuple("Param_dist", "bp period sta_dist find_phvel_amp_eq correct_tt_select_data")
+Param_dist = namedtuple("Param_dist",
+    "bp_dist bp_phase period sta_dist find_phvel_amp_eq correct_tt_select_data")
+
 
 def process_periods_sta_dist(bp, periods: list):
     # re-create directory 'all_events'
@@ -27,10 +29,26 @@ def process_periods_sta_dist(bp, periods: list):
         stdin = subprocess.PIPE
     ).communicate(cmd_string.encode())
 
+    bp_dist = {
+        "snr": bp.snr,
+        "dist": bp.dist,
+        "sac": bp.sac,
+        "all_events": bp.all_events,
+    }
+    bp_phase = {
+        "region": bp.region.original(),
+        "ref_lo": bp.ref_sta.lo,
+        "ref_la": bp.ref_sta.le,
+        "tcut": bp.tcut,
+        "nsta": bp.nsta,
+        "stacut": bp.stacut,
+    }
+
     find_phvel_amp_eq = get_binuse('find_phvel_amp_earthquake')
     correct_tt_select_data = get_binuse('correct_tt_select_data')
 
-    ps = [Param_dist(bp, per, sta_dist, find_phvel_amp_eq, correct_tt_select_data) for per in periods]
+    ps = [Param_dist(bp_dist, bp_phase, per, sta_dist,
+        find_phvel_amp_eq, correct_tt_select_data) for per in periods]
 
     # periods = [20, 25, 26]
     Pool(10).map(process_period_sta_dist, ps)
@@ -48,8 +66,9 @@ def process_period_sta_dist(p: Param_dist):
     batch function for process_periods_sta_dist
     """
     # bind period to bp
-    calc_distance_find_eq(p.bp, p.sta_dist, p.period, p.find_phvel_amp_eq)
-    plot_events_phase_time_and_amp(p.bp, p.period, p.correct_tt_select_data)
+    calc_distance_find_eq(p.bp_dist, p.period,  p.sta_dist, p.find_phvel_amp_eq)
+    plot_events_phase_time_and_amp(p.bp_phase, p.bp_dist["snr"], p.bp_dist["dist"],
+        p.period, p.correct_tt_select_data)
 
 
         
@@ -59,8 +78,8 @@ def process_period_sta_dist(p: Param_dist):
 def calc_distance_find_eq(bp, period, sta_dist, find_phvel_amp_eq):
     cmd_string = 'echo shell start\n'
     cmd_string += f'{find_phvel_amp_eq} '
-    cmd_string += f'{period} {sta_dist} {bp.snr} {bp.dist} {bp.sac}/\n'
-    cmd_string += f'mv {get_dirname("sec", period, bp.snr, bp.dist)} {bp.all_events}/\n'
+    cmd_string += f'{period} {sta_dist} {bp["snr"]} {bp["dist"]} {bp["sac"]}/\n'
+    cmd_string += f'mv {get_dirname("sec", period, bp["snr"], bp["dist"])} {bp["all_events"]}/\n'
     cmd_string += 'echo shell end'
     subprocess.Popen(
         ['bash'],
@@ -68,8 +87,8 @@ def calc_distance_find_eq(bp, period, sta_dist, find_phvel_amp_eq):
     ).communicate(cmd_string.encode())
 
 
-def plot_events_phase_time_and_amp(bp, period, correct_tt_select_data):
-    sec = Path(bp.all_events / get_dirname("sec", period, bp.snr, bp.dist))
+def plot_events_phase_time_and_amp(bp, snr, dist, period, correct_tt_select_data):
+    sec = Path(bp.all_events / get_dirname("sec", period, snr, dist))
 
     try:
         events = glob_patterns("glob", sec, ["*ph.txt", "*_v1"])
@@ -79,11 +98,9 @@ def plot_events_phase_time_and_amp(bp, period, correct_tt_select_data):
     Param_phase = namedtuple("Param_phase",
         "region nsta stacut ref_lo ref_la tcut "
         "period event correct_tt_select_data")
-        
 
     ps = [Param_phase(
-        bp.region.original(), bp.nsta, bp.stacut,
-        bp.ref_sta.lo, bp.ref_sta.la, bp.tcut,
+        bp["region"], bp["nsta"], bp["stacut"], bp["ref_lo"], bp["ref_la"], bp["tcut"], 
         period, e, correct_tt_select_data) for e in events]
     with ThreadPoolExecutor(max_workers=10) as pool:
         pool.map(plot_event_phase_time_and_amp, ps)
