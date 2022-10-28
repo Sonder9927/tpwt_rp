@@ -72,7 +72,7 @@ def plot_events_phase_time_and_amp(bp, period, correct_tt_select_data):
     sec = Path(bp.all_events / get_dirname("sec", period, bp.snr, bp.dist))
 
     try:
-        events = glob_patterns("glob", sec, ["*ph.txt", "_v1"])
+        events = glob_patterns("glob", sec, ["*ph.txt", "*_v1"])
     except FileNotFoundError as error:
         print(error)
         return

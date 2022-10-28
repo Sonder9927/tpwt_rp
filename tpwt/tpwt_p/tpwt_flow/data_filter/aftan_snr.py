@@ -25,7 +25,7 @@ def process_events_aftan_snr(sac_dir: Path, path: str, work: Path):
 
 
     events = glob_patterns("glob", sac_dir, ['20*/'])
-    # spectral_snr_TPWT
+    # aftani_c_pgl_TPWT
     aftani_c_pgl_TPWT = get_binuse('aftani_c_pgl_TPWT', bin_from=work)
 
     ps = [Param_as(e, dir_ref, work, spectral_snr_TPWT, aftani_c_pgl_TPWT) for e in events]
@@ -40,10 +40,11 @@ def process_event_aftan_and_SNR(p):
     """
     batch function for process_events_flag_aftan_and_SNR
     """
-    filelist='filelist'
-    # go into sac data directory
-
     sacs = glob_patterns("glob", p.event, ['*.sac'])
+
+    filelist='filelist'
+
+    # go into sac data directory
     os.chdir(str(p.event))
 
     with open(filelist, 'w+') as f:
