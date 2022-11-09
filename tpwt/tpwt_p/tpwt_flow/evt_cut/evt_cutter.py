@@ -88,8 +88,8 @@ def batch_1Hz(p: Param_Z):
     which will be putted into z_dir
     """
     file_z = p.target_z / p.zfile.name
-    # decimate_sac(p.zfile, file_z)
-    decimate_obspy(p.zfile, str(file_z))
+    decimate_sac(p.zfile, file_z)
+    # decimate_obspy(p.zfile, str(file_z))
 
 
 def batch_cut_event(p: Param_cut):
