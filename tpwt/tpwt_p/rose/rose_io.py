@@ -40,22 +40,20 @@ def glob_patterns(method: str, path: Path, patterns: list) -> list:
 ###############################################################################
 
 
-def get_dirname(target: str, *args):
-    de = "Please give a list of arguments for "
-    if target == "TPWT" or target == "tpwt":
-        if len(args) == 4:
-            [snr, tcut, smooth, damping] = args
+def get_dirname(target: str, *, snr, tcut, smooth, damping, period, dist):
+    de = "Please point out the arguments: "
+    if target in ["TPWT", "tpwt"]:
+        if all([snr, tcut, smooth, damping]):
             return get_tpwt_dirname(snr, tcut, smooth, damping)
         else:
-            raise KeyError(de + "[snr, tcut, smooth, damping]")
+            raise KeyError(de + "snr, tcut, smooth, damping")
     elif target == "sec":
-        if len(args) == 3:
-            [period, snr, dist] = args
+        if all([period, snr, dist]):
             return get_sec_dirname(period, snr, dist)
         else:
-            raise KeyError(de + "[period, snr, dist]")
+            raise KeyError(de + "period, snr, dist")
     else:
-        raise KeyError(f"No target found for `{target}`.")
+        raise KeyError(f"Not support for `{target}`.")
 
 
 def get_sec_dirname(period, snr, dist) -> Path:
@@ -69,7 +67,7 @@ def get_tpwt_dirname(snr, tcut, smooth, damping) -> Path:
 ###############################################################################
 
 
-def re_create_dir(target):
+def re_create_dir(target) -> Path:
     """
     Re-create the dir given if it exists, or create it.
     """
@@ -113,3 +111,4 @@ def read_xy(f) -> pd.DataFrame:
 
 
 ###############################################################################
+

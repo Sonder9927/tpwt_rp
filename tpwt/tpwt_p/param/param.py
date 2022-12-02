@@ -11,7 +11,6 @@ class Param:
         self.targets = p["targets"]
         self.filter = p["filter"]
         self.model = p["model"]
-        self.inverse = self.model
 
     def __str__(self):
         return "This is a parameters class."
@@ -22,3 +21,4 @@ class Param:
 
     def bound_param(self) -> Bound_Param:
         return Bound_Param(self.targets, self.filter, self.model)
+

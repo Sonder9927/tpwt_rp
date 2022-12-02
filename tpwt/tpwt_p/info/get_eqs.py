@@ -46,6 +46,8 @@ class Eq_Per:
         return avgvel_inner
 
 
+###############################################################################
+
 
 def get_eqs_dict(eqs: list) -> dict[str, Eq_Per]:
     eqs_dict = dict()

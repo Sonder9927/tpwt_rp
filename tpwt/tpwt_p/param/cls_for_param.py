@@ -18,7 +18,7 @@ class State:
     def change_state(self, state: str, info: bool):
         self.state[state] = info
 
-    def save(self, target=""):
+    def save(self, target=None):
         t = target or self.target
         demjson.encode_to_file(t, self.state, overwrite=True)
 

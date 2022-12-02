@@ -13,3 +13,9 @@ def average(f) -> float:
 
 
 ###############################################################################
+def dicts_of_per_vel(pers: list, vels: list) -> list[dict[str, float]]:
+    if (l:=len(pers)) == len(vels):
+        return [{'per': pers[n], 'vel': vels[n]} for n in range(l)]
+    else:
+        raise ValueError('#periods != #vels, please check parameters lists.')
+

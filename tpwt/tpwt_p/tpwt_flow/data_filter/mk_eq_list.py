@@ -102,6 +102,8 @@ def write_event_eqlistper(p: Param_we):
     for sac in tems_evt:
         content += f'{evt_dir/sac}\n'
 
+    return content
+
 
 ##############################################################################
 
