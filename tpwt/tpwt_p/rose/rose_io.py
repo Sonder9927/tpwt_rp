@@ -40,7 +40,7 @@ def glob_patterns(method: str, path: Path, patterns: list) -> list:
 ###############################################################################
 
 
-def get_dirname(target: str, *, snr, tcut, smooth, damping, period, dist):
+def get_dirname(target: str, *, snr=0, tcut=0, smooth=0, damping=0, period=0, dist=0):
     de = "Please point out the arguments: "
     if target in ["TPWT", "tpwt"]:
         if all([snr, tcut, smooth, damping]):

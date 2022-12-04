@@ -30,7 +30,8 @@ def process_events_aftan_snr(sac_dir: Path, path: str, work: Path):
 
     ps = [Param_as(e, dir_ref, work, spectral_snr_TPWT, aftani_c_pgl_TPWT) for e in events]
 
-    Pool(10).map(process_event_aftan_and_SNR, ps)
+    pool = Pool(10)
+    pool.map(process_event_aftan_and_SNR, ps)
 
 
 ###############################################################################
@@ -56,6 +57,7 @@ def process_event_aftan_and_SNR(p):
             aftani_c_pgl_TPWT_run(p.dir_ref, sf, p.aftani_c_pgl_TPWT)
 
     cmd_string = f'{p.spectral_snr_TPWT} {filelist} > temp.dat \n'
+    cmd_string += 'rm temp.dat'
     subprocess.Popen(
         ['bash'],
         stdin = subprocess.PIPE

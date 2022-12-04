@@ -4,9 +4,10 @@ import pygmt
 
 
 # plot phase time
-def gmt_phase_time(input_map: str, region: list):
+def gmt_phase_time(input_map, region: list):
+    im = str(input_map)
     grid = pygmt.surface(
-        data = input_map,
+        data = im,
         spacing = .2,
         region = region,
     )
@@ -14,7 +15,7 @@ def gmt_phase_time(input_map: str, region: list):
         grid = grid,
         region = region,
         output_type = "file",
-        outfile = input_map + ".HD",
+        outfile = im + ".HD",
     )
 
 
