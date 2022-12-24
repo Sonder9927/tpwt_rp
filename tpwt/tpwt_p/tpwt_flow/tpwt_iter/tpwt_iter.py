@@ -90,5 +90,5 @@ class TPWT_Iter:
         else:
             ps = self.ps
 
-        inverse_run(method, ps)
+        inverse_run(ps, method)
 

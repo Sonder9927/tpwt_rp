@@ -16,15 +16,15 @@ def inverse_pre(params):
     Pool(10).map(batch_period_phampcor, params)
 
 ###############################################################################
-def inverse_run(method="rswt", params=[]):
+def inverse_run(params, method="rswt"):
     # check if TPWT output dir exists
-    if not (td := params[0].tpwt_dir.exists()):
+    if not (td := params[0].tpwt_dir).exists():
         err = f'TPWT output directory {td} is not found.'
         err += 'Please confirm the initilialization is successful.'
         raise FileNotFoundError(err)
-    if method in ['tpwt', 'TPWT']:
+    if (mtd := method.lower()) == 'tpwt':
         tpwt_run(params)
-    elif method in ['rswt', 'RSWT']:
+    elif mtd == 'rswt':
         rswt_run(params)
     else:
         raise KeyError("Please choice TPWT or RSWT.")
@@ -90,7 +90,7 @@ def first_iter_in_per_dir(per, smooth, damp, per_dir, res_dir, kern) -> str:
         err += 'Please confirm the initilialization is successful.'
         raise FileNotFoundError(err)
 
-    ## simannerr100
+    ## simannerr100 for rswt
     simanner_TPWT_run(eq, kern)
 
     # return avgvel and std
@@ -101,13 +101,23 @@ def first_iter_in_per_dir(per, smooth, damp, per_dir, res_dir, kern) -> str:
     return velarea.split()[1]
 
 
-def eqfine_to_res_dir(kern, res_dir, *, per, ampcut, tcut, stacut, tevtrmscut=None, ampevtrmscut=None):
+def eqfine_to_res_dir(kern, res_dir, *, per, ampcut, tcut, stacut, tevtrmscut=0, ampevtrmscut=0):
     # get eqlistper.fine
-    find_bad_kern(kern, per=per, ampcut=ampcut, tcut=tcut, stacut=stacut)
+    if kern == 100:
+        find_bad_kern(kern, per=per, ampcut=ampcut, tcut=tcut, stacut=stacut)
+    elif kern == 300:
+        find_bad_kern(kern, per=per, ampcut=ampcut, tcut=tcut, stacut=stacut, tevtrmscut=tevtrmscut, ampevtrmscut=ampevtrmscut)
+    else:
+        err = """
+        Check the kern:\n
+        100 for rswt\n
+        300 for tpwt
+        """
+        raise KeyError(err)
 
     # get linenum of eqlistper.fine
     eq_fine = res_dir / r'eqlistper.fine'
-    with open(eq_fine, 'r') as f1:
+    with eq_fine.open("r") as f1:
         content_list = f1.readlines()
     # update eqlistper{per}
     with open(f'{res_dir}/eqlistper{per}.update', 'w+') as f2:

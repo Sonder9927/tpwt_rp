@@ -42,7 +42,7 @@ def glob_patterns(method: str, path: Path, patterns: list) -> list:
 
 def get_dirname(target: str, *, snr=0, tcut=0, smooth=0, damping=0, period=0, dist=0):
     de = "Please point out the arguments: "
-    if target in ["TPWT", "tpwt"]:
+    if target.lower() == "tpwt":
         if all([snr, tcut, smooth, damping]):
             return get_tpwt_dirname(snr, tcut, smooth, damping)
         else:
