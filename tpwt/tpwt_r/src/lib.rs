@@ -1,8 +1,8 @@
 mod hello;
-mod mark;
+mod sac;
 mod navi;
 
-use crate::mark::sac_evt_sta::SES;
+use crate::sac::sac_evt_sta::Ses;
 use crate::navi::point::Point;
 use crate::navi::region::Region;
 use pyo3::prelude::*;
@@ -14,6 +14,6 @@ fn tpwt_r(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(hello::hello_name, m)?)?;
     m.add_class::<Point>()?;
     m.add_class::<Region>()?;
-    m.add_class::<SES>()?;
+    m.add_class::<Ses>()?;
     Ok(())
 }
