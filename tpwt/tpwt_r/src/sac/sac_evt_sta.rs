@@ -3,18 +3,21 @@ use pyo3::prelude::*;
 use sacio::{Sac, SacError, SacString};
 
 #[pyclass(text_signature = "(info)")]
-/// Region class
+/// Sac class
 pub struct Ses {
     file: String,
+    sac: Sac,
 }
 
 #[pymethods]
 impl Ses {
     #[new]
-    fn new(file: &str) -> Self {
-        Ses {
-            file: file.to_string(),
-        }
+    fn new(file: String) -> Self {
+        let sac = match Sac::from_file(&file) {
+            Ok(s) => s,
+            Err(_) => panic!("Sac read Error!"),
+        };
+        Ses { file, sac }
     }
 
     fn __repr__(&self) -> PyResult<String> {
@@ -22,35 +25,32 @@ impl Ses {
     }
 
     #[getter]
-    fn disk_km(&self) -> PyResult<String> {
-        let sac = to_pyerr(Sac::from_file(&self.file))?;
-        // let sac = read_sac(&self.file)?;
-        Ok(format!(
-            "Read disk {}km from sac file {}.",
-            sac.dist_km(),
-            self.file
-        ))
+    fn disk_km(&self) -> PyResult<f32> {
+        Ok(self.sac.dist_km())
+    }
+    #[getter]
+    fn max_amp(&self) -> PyResult<f32> {
+        Ok(self.sac.max_amp())
     }
 
-    // fn set_sac_head(&self, sta_name: String, stlo: f32, stla: f32, evlo: f32, evla: f32, target: String) -> PyResult<String> {
     fn set_sac_head(
-        &self,
+        &mut self,
         sta_name: &str,
         sta_evt: [f32; 6],
         channel: &str,
         target: String,
     ) -> PyResult<String> {
-        // let mut sac = read_sac(&self.file)?;
-        let mut sac = to_pyerr(Sac::from_file(&self.file))?;
         let [stlo, stla, stel, evlo, evla, evdp] = sta_evt;
-        sac.set_string(SacString::Station, sta_name);
-        sac.set_string(SacString::Component, channel);
-        to_pyerr(sac.set_station_location(stla, stlo, stel))?;
-        to_pyerr(sac.set_event_location(evla, evlo, evdp))?;
+        // chang station name and channel
+        self.sac.set_string(SacString::Station, sta_name);
+        self.sac.set_string(SacString::Component, channel);
 
-        // sac.compute_dist_az();
-        to_pyerr(sac.to_file(target))?;
-        // write_sac(sac, &target)?;
+        // set location both of station and event
+        to_pyerr(self.sac.set_station_location(stla, stlo, stel))?;
+        to_pyerr(self.sac.set_event_location(evla, evlo, evdp))?;
+
+        // save to the target file
+        to_pyerr(self.sac.to_file(target))?;
         Ok(format!("Write to the sac file {}\n", self.file))
     }
 }
@@ -58,25 +58,6 @@ impl Ses {
 fn to_pyerr<T>(res: Result<T, SacError>) -> Result<T, PyErr> {
     match res {
         Ok(res) => Ok(res),
-        Err(_) => Err(PyException::new_err("Sac Error!")),
+        Err(_) => Err(PyException::new_err("Sac operate Error!")),
     }
 }
-
-// fn read_sac(file: &str) -> Result<Sac, PyErr> {
-//     match Sac::from_file(file) {
-//         Ok(sac) => Ok(sac),
-//         Err(_) => return Err(PyFileNotFoundError::new_err("Not found sac file!")),
-//     }
-// }
-
-// fn write_sac(mut sac: Sac, file: &str) -> Result<(), PyErr> {
-//     match sac.to_file(file) {
-//         Ok(()) => Ok(()),
-//         Err(_) => {
-//             return Err(PyFileNotFoundError::new_err(format!(
-//                 "Failed to write sac file {}",
-//                 file
-//             )))
-//         }
-//     }
-// }

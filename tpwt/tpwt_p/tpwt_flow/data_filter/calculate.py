@@ -6,7 +6,7 @@ import subprocess
 from tpwt_p.rose import re_create_dir, get_binuse
 
 
-def calculate_dispersion(evt, sta, outdir, disps):
+def calculate_dispersion(evt, sta, outdir: str, disps: list):
     # cp disp model
     LOVE = "TPWT/utils/LOVE_400_100.disp"
     RAYL = "TPWT/utils/RAYL_320_80_32000_8000.disp"
@@ -18,13 +18,6 @@ def calculate_dispersion(evt, sta, outdir, disps):
     mk_pathfile_TPWT(evt, sta, pathfile)
 
     # create tempinp using for GDM52_dispersion_TPWT
-    def create_tempinp(pathfile, tempinp: str):
-        with open(tempinp, "w+") as f:
-            f.write("77\n")
-            with open(pathfile, "r") as p:
-                shutil.copyfileobj(p, f)
-            f.write("99")
-
     tempinp = 'tempinp'
     create_tempinp(pathfile, tempinp)
 
@@ -55,6 +48,14 @@ def calculate_dispersion(evt, sta, outdir, disps):
 def cp_disps(disp_list: list[str], outdir: str):
     with ThreadPoolExecutor(max_workers=2) as pool:
         pool.map(shutil.copy, disp_list, [outdir]*len(disp_list))
+
+
+def create_tempinp(pathfile, tempinp: str):
+    with open(tempinp, "w+") as f:
+        f.write("77\n")
+        with open(pathfile, "r") as p:
+            shutil.copyfileobj(p, f)
+        f.write("99")
 
 
 # mk_pathfile_TPWT
@@ -93,3 +94,4 @@ def mk_pathfile_TPWT(sta1, sta2, pathfile):
             f.write(content)
 
     f.close()
+

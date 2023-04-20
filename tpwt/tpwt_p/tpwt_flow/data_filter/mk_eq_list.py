@@ -1,50 +1,41 @@
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Pool
-from collections import namedtuple
-from icecream import ic
-from threading import Lock
 from pathlib import Path
+from icecream import ic
+import pandas as pd
 
 from tpwt_p.check import check_exists
 from tpwt_p.rose import glob_patterns
 
 
-Param_tem = namedtuple("Parma_tem", "data stas evt nsta lock")
-Param_we = namedtuple("Parma_tem", "sac_dir evt_id evt temppers")
-
-
-def mk_eqlistper(p, evts, stas) -> Path:
-    events = find_events(evts, p.data)
-    stations = find_stations(stas, p.region)
+def mk_eqlistper(sac_dir: Path, evts, stas, region, nsta) -> Path:
+    events = find_events(evts, sac_dir)
+    stations = find_stations(stas, region)
 
     # process every event
     # find valid events
-    temppers = process_events_tempper(p, events, stations)
+    temppers = process_events_tempper(sac_dir, events, stations, nsta)
     
     # write eqlistper
-    eqlistper = write_events_eqlistper(p.data, temppers)
+    eqlistper = write_events_eqlistper(sac_dir, temppers)
+
     return eqlistper
 
 
 ###############################################################################
 
 
-def process_events_tempper(p, events, stas) -> dict:
-    temppers = {}
+def process_events_tempper(sac_dir: Path, events, stas, nsta) -> dict:
+    temppers = dict()
 
-    # need a lock for the dict temppers
-    lock = Lock()
-
-    ps = [Param_tem(p.data, stas, e, p.nsta, lock) for e in events]
-
-    temppers = {}
-    for tem in Pool(10).imap(process_event_tempper, ps):
-        if tem:
-            temppers.update(tem)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for e in events:
+            future = executor.submit(process_event_tempper, sac_dir, e, stas, nsta)
+            temppers.update(future.result())
     return temppers
 
-def write_events_eqlistper(sac_dir, temppers: dict):
-    eqlistper = sac_dir / 'eqlistper'
+
+def write_events_eqlistper(sac_dir: Path, temppers: dict):
+    eqlistper = Path('target/eqlistper')
 
     f = open(eqlistper, 'w+')
     # first line
@@ -52,11 +43,11 @@ def write_events_eqlistper(sac_dir, temppers: dict):
 
     evt_list = sorted([*temppers])
 
-    ps = [Param_we(sac_dir, i+1, e, temppers) for i, e in enumerate(evt_list)]
-
-    for content in Pool(10).imap(write_event_eqlistper, ps):
-        if content:
-            f.write(content)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for i, e in enumerate(evt_list):
+            future = executor.submit(
+                write_event_eqlistper, temppers, sac_dir, e, i+1)
+            f.write(future.result())
 
     f.close()
     return eqlistper
@@ -68,37 +59,37 @@ batch function
 """
 
 
-def process_event_tempper(p):
+def process_event_tempper(data: Path, evt, stas, nsta) -> dict:
     """
     batch function
     """
-    filelist = check_exists(p.data / p.evt / 'filelist')
+    filelist = check_exists(data / evt / 'filelist')
 
     with open(filelist, 'r') as f:
         sacs = f.read().splitlines()
 
-    tempper = [i for sta in p.stas if (i := f'{p.evt}.{sta}.LHZ.sac') in sacs]
+    tempper = [sac for sta in stas if (sac := f'{evt}.{sta}.LHZ.sac') in sacs]
 
-    if len(tempper) <= p.nsta:
-        ic(p.evt, "not enough stations")
-        return False
+    if len(tempper) <= nsta:
+        ic(evt, "not enough stations")
+        return {}
     else:
         # ic(evt, "done")
-        return {p.evt: tempper}
+        return {evt: tempper}
 
 
-def write_event_eqlistper(p: Param_we):
+def write_event_eqlistper(temppers: dict, sac_dir: Path, evt, evt_id: int):
     """
     batch function
     get content for write into file eqlistper
     the first line for every valid event is
     total number of sac files exists, evt_num
     """
-    tems_evt = p.temppers[p.evt]
-    content = f'    {len(tems_evt)} {p.evt_id}\n'
+    tems_evt = temppers[evt]
+    content = f'    {len(tems_evt)} {evt_id}\n'
 
     # sac files' position will follow it
-    evt_dir = p.sac_dir / p.evt
+    evt_dir = sac_dir / evt
     for sac in tems_evt:
         content += f'{evt_dir/sac}\n'
 
@@ -108,16 +99,17 @@ def write_event_eqlistper(p: Param_we):
 ##############################################################################
 
 
-def find_events(evts, sac_dir: Path) -> list:
+def find_events(evts: pd.DataFrame, sac_dir: Path) -> list:
     """
     Return a list of events
     that are in both file_name and dir_name.
     """
-    s = lambda x: [str(i) for i in x]
+    evts_dir = pd.DataFrame(
+        data = [e.name for e in glob_patterns("glob", sac_dir, ["20*/"])],
+        columns = ["sta"])
 
-    e1 = s(evts)
-    e2 = s(glob_patterns("glob", sac_dir, ["20*"]))
-    return e1|e2
+    events_df = pd.concat([evts, evts_dir]).drop_duplicates(keep=False)
+    return events_df.sta.dropna().unique()
 
 
 def find_stations(stas, area):
@@ -126,7 +118,7 @@ def find_stations(stas, area):
     that are in the area.
     """
     sta_in_area = stas[
-        (stas.la >= area.sourth)
+        (stas.la >= area.south)
         & (stas.la <= area.north)
         & (stas.lo >= area.west)
         & (stas.lo <= area.east)

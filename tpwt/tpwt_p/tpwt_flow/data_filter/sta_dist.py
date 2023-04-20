@@ -15,7 +15,7 @@ Param_phase_amp = namedtuple("Param_phase_amp", "event region")
 
 def process_periods_sta_dist(bp, periods: list):
     # re-create directory 'all_events'
-    all_events = Path(bp.all_events)
+    all_events = Path("target/all_events")
     re_create_dir(all_events)
 
     sta_dist = r"target/sta_dist.lst"
@@ -27,7 +27,7 @@ def process_periods_sta_dist(bp, periods: list):
         "snr": bp.snr,
         "dist": bp.dist,
         "sac": bp.sac,
-        "all_events": bp.all_events,
+        "all_events": all_events,
     }
     bp_v1 = {
         "ref_lo": bp.ref_sta.lo,
@@ -44,19 +44,21 @@ def process_periods_sta_dist(bp, periods: list):
     ps = [Param_dist(bp_dist, bp_v1, per, sta_dist,
         find_phvel_amp_eq, correct_tt_select_data) for per in periods]
 
-    pool1 = Pool(10)
+    pool1 = Pool(3)
     pool1.map(process_period_sta_dist, ps)
     Path(sta_dist).unlink()
 
     # plot phase time and amp of all events
-    events = glob_patterns("glob", all_events, ["*/*ph.txt*"])
+    events = glob_patterns("glob", all_events, ["**/*ph.txt"])
     region = bp.region.original()
     ps = [Param_phase_amp(e, region) for e in events]
-    pool2 = Pool(10)
+    pool2 = Pool(3)
     pool2.map(event_phase_time_and_amp, ps)
 
 
 ###############################################################################
+
+
 def calculate_sta_dist(evt, sta, sac, sta_dist):
     """
     calc_distance to create sta_dist.lst

@@ -30,7 +30,7 @@ def process_events_aftan_snr(sac_dir: Path, path: str, work: Path):
 
     ps = [Param_as(e, dir_ref, work, spectral_snr_TPWT, aftani_c_pgl_TPWT) for e in events]
 
-    pool = Pool(10)
+    pool = Pool(3)
     pool.map(process_event_aftan_and_SNR, ps)
 
 

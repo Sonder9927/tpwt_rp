@@ -34,7 +34,6 @@ class Bound_Param:
         self.data = Path(self.sac)
         self.evt = pt["evt_lst"]
         self.sta = pt["sta_lst"]
-        self.all_events = pt["all_events"]
         # filter
         self.dist = pf["dist"]
         self.nsta = pf["nsta"]

@@ -1,5 +1,4 @@
-# from collections import namedtuple
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 import shutil
 
@@ -13,7 +12,8 @@ from .tpwt_fns import(
 
 def inverse_pre(params):
     # multiprocessing
-    Pool(10).map(batch_period_phampcor, params)
+    with ProcessPoolExecutor(max_workers=10) as executor:
+        executor.map(batch_period_phampcor, params)
 
 ###############################################################################
 def inverse_run(params, method="rswt"):
@@ -32,12 +32,14 @@ def inverse_run(params, method="rswt"):
 
 def tpwt_run(params):
     # multiprocessing
-    Pool(10).map(batch_period_grid, params)
+    with ProcessPoolExecutor(max_workers=10) as executor:
+        executor.map(batch_period_grid, params)
 
 
 def rswt_run(params):
     # multiprocessing
-    Pool(10).map(batch_period_grid, params)
+    with ProcessPoolExecutor(max_workers=10) as executor:
+        executor.map(batch_period_grid, params)
 
 ###############################################################################
 """

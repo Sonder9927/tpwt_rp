@@ -13,21 +13,20 @@ class Data_Filter:
         self.evts = read_xyz(self.bp.evt, ['sta', 'lo', 'la'])
         self.stas = read_xyz(self.bp.sta, ['sta', 'lo', 'la'])
         self.periods = periods
-        self.path = None
+        self.path = "target/path"
         self.eq_list = None
 
-    def calculate_dispersion(self, path, disp_list=[]):
+    def calculate_dispersion(self, disp_list=[]):
         """
         genetate inter-station dispersion curves using the GDM model.
         """
-        calculate_dispersion(sta_v2(self.evts), sta_v2(self.stas), path, disp_list)
-        self.path = path
+        calculate_dispersion(sta_v2(self.evts), sta_v2(self.stas), self.path, disp_list)
         return "Flag GDM52 done."
 
-    def aftan_snr(self, path):
-        if not self.path:
-            self.calculate_dispersion(path)
-
+    def aftan_snr(self):
+        """
+        aftan_snr
+        """
         process_events_aftan_snr(self.bp.data, self.path, self.bp.work_dir)
 
         return "Flag aftan_snr done."
@@ -38,12 +37,16 @@ class Data_Filter:
         process_periods_sta_dist(self.bp, self.periods)
 
     def mk_eqlistper(self):
-        self.eq_list = mk_eqlistper(self.bp, self.evts["sta"], self.stas)
+        self.eq_list = mk_eqlistper(
+            sac_dir = self.bp.data,
+            evts = self.evts["sta"],
+            stas = self.stas,
+            region = self.bp.region,
+            nsta = self.bp.nsta
+            )
 
+    # getter
     def eqlistper(self):
-        if self.eq_list:
-            self.mk_eqlistper()
-
         return self.eq_list
         
 

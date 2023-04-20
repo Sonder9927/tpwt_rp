@@ -7,10 +7,10 @@ def inversion_nodes_TPWT(out_file: str, region, dgrid=[.5, .5]):
     convdeg = np.pi / 180
     circ = convdeg * 6371
 
-    lonmax = region.e + 2
-    lonmin = region.w - 2
-    latmax = region.n + 2
-    latmin = region.s - 2
+    lonmax = region.east + 2
+    lonmin = region.west - 2
+    latmax = region.north + 2
+    latmin = region.south - 2
     [dlon, dlat] = dgrid
 
     nlat = int((latmax - latmin) / dlat) + 1

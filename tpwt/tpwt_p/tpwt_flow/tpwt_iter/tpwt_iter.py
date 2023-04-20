@@ -22,22 +22,24 @@ class TPWT_Iter:
         self.smooth = smooth
         self.damping = damping
 
-    def initialize(self, periods=[]):
+    def initialize(self, periods=[], area_expand=.5):
         # create inversion grid nodes
-        self.node_file = "inversion_nodes"
+        self.node_file = "target/inversion_nodes"
         region = Region(self.param.model["region"])
-        self.region = region.expanded(.5)
-        inversion_nodes_TPWT(self.node_file, self.region)
+        # notice: `expanded` will return a list `[w,e,s,n]` but not change `Region`
+        self.region = region.expanded(area_expand)
+        region.expand(area_expand)
+        inversion_nodes_TPWT(self.node_file, region)
 
         # eqlistper file
-        self.eqlistper = f'{self.param.targets["sac"]}/eqlistper'
+        self.eqlistper = 'target/eqlistper'
 
         # wave type: rayleigh or love
         # (this version only support rayleigh)
         self.wave_type = ['rayleigh', 'love'][0]
 
         # stationid
-        self.staid = 'stationid.dat'
+        self.staid = 'target/stationid.dat'
         staid = pd.read_csv(
             self.param.targets["sta_lst"],
             delim_whitespace = True,
@@ -50,14 +52,14 @@ class TPWT_Iter:
         staid.to_csv(self.staid, sep=' ', header=False, index=False)
 
         # some dirs
-        self.all_events = check_exists(self.param.targets["all_events"])
+        self.all_events = check_exists("target/all_events")
         ## these need to re-create to generate new results
         self.tpwt_dir = re_create_dir(
             get_dirname("TPWT", snr=self.snr, tcut=self.tcut, smooth=self.smooth, damping=self.damping))
-        self.sens_dir = re_create_dir(self.param.targets["sens_dir"])
+        self.sens_dir = re_create_dir("target/sens_dir")
 
         # preparation for inversion with periods
-        self.pers = self.param.model["peridos"]
+        self.pers = self.param.model["periods"]
         self.vels = self.param.model["vels"]
         self.ds = dicts_of_per_vel(pers=self.pers, vels=self.vels)
         ## special cases
@@ -76,7 +78,7 @@ class TPWT_Iter:
 
         inverse_pre(self.ps)
 
-    def inverse(self, periods=[], method="tpwt"):
+    def inverse(self, periods=[], method="rswt"):
         # run tpwt with special periods or periods initialized(default)
         if periods:
             p_valid = set(periods) & set(self.pers)
