@@ -10,4 +10,6 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.17.1", features = ["extension-module"] }
-sacio = "0.1.0"
+ndarray = { version = "0.15.3" }
+geo = { version = "0.24.1" }
+sacio = {version = "0.1.0"}

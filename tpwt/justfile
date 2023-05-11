@@ -16,7 +16,7 @@ ig := "'TPWT|temp|target|__pycache__'"
 tree:
   tree -d -I {{ig}}
 
-# eidt rust lib.rs
+# edit rust lib.rs
 er:
   {{vi}} {{r}}/src/lib.rs
 

@@ -12,8 +12,10 @@ use pyo3::prelude::*;
 fn tpwt_r(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(hello::hello, m)?)?;
     m.add_function(wrap_pyfunction!(hello::hello_name, m)?)?;
+    m.add_function(wrap_pyfunction!(sac::sac_new, m)?)?;
+    m.add_function(wrap_pyfunction!(sac::sac_sens, m)?)?;
+    m.add_class::<Ses>()?;
     m.add_class::<Point>()?;
     m.add_class::<Region>()?;
-    m.add_class::<Ses>()?;
     Ok(())
 }

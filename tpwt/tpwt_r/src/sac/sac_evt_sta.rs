@@ -2,7 +2,7 @@ use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
 use sacio::{Sac, SacError, SacString};
 
-#[pyclass(text_signature = "(info)")]
+#[pyclass(text_signature = "(sac_file)")]
 /// Sac class
 pub struct Ses {
     file: String,
