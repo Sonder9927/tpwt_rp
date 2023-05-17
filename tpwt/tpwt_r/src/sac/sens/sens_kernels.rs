@@ -81,7 +81,8 @@ pub fn _unsmoothed_sensitivity_kernels(
                 let delta2 = if delta1 == 0. && y == 0. {
                     (dx2 * 2.).sqrt()
                 } else {
-                    (x.powi(2) + y.powi(2)).sqrt()
+                    // (x.powi(2) + y.powi(2)).sqrt()
+                    x.hypot(y)
                 };
 
                 // let angle: f32 = (-y).atan2(-x) * 180. / pi;
