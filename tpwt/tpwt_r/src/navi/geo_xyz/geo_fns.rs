@@ -11,7 +11,8 @@ pub fn convex_hull_from_file(f: &str) -> Result<Polygon, PolarsError> {
         .select(&[col("column_1").alias("x"), col("column_2").alias("y")])
         .collect()?;
     // let data_n: Array2::<f64> = df.to_ndarray::<Float64Type>().unwrap();
-    // println!("{:?}", data_n)
+    // // need add feature `ndarray` to crate `polars`
+    // println!("{:?}", data_n);
 
     let pos: Vec<(f64, f64)> = df
         .column("x")?

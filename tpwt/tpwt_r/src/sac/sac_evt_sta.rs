@@ -5,8 +5,8 @@ use sacio::{Sac, SacError, SacString};
 #[pyclass(text_signature = "(sac_file)")]
 /// Sac class
 pub struct Ses {
-    file: String,
-    sac: Sac,
+    pub file: String,
+    pub sac: Sac,
 }
 
 #[pymethods]
@@ -46,7 +46,7 @@ impl Ses {
         self.sac.set_string(SacString::Component, channel);
 
         // set location both of station and event
-        to_pyerr(self.sac.set_station_location(stla, stlo, stel))?;
+        self.sac.set_station_location(stla, stlo, stel).unwrap();
         to_pyerr(self.sac.set_event_location(evla, evlo, evdp))?;
 
         // save to the target file
