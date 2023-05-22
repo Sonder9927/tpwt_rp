@@ -7,6 +7,9 @@ use crate::navi::region::Region;
 use crate::sac::sac_evt_sta::Ses;
 use pyo3::prelude::*;
 
+#[macro_use]
+extern crate fstrings;
+
 /// A Python module implemented in Rust.
 #[pymodule]
 fn tpwt_r(_py: Python, m: &PyModule) -> PyResult<()> {

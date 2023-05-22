@@ -5,8 +5,8 @@ use sacio::{Sac, SacError, SacString};
 #[pyclass(text_signature = "(sac_file)")]
 /// Sac class
 pub struct Ses {
-    pub file: String,
-    pub sac: Sac,
+    file: String,
+    sac: Sac,
 }
 
 #[pymethods]
@@ -24,6 +24,10 @@ impl Ses {
         Ok(format!("Info sac file: {}.", self.file))
     }
 
+    #[getter]
+    fn delta(&self) -> PyResult<f32> {
+        Ok(self.sac.delta())
+    }
     #[getter]
     fn disk_km(&self) -> PyResult<f32> {
         Ok(self.sac.dist_km())
