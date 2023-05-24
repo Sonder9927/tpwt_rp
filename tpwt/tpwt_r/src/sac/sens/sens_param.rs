@@ -23,7 +23,7 @@ impl SensParam {
         self.itvl.x(x)
     }
 
-    pub fn arry2_dimension(&self) -> (usize, usize) {
+    pub fn sens_dimension(&self) -> (usize, usize) {
         (self.imax, self.imax)
     }
 }

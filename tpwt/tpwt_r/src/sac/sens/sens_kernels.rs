@@ -1,6 +1,7 @@
 use geo::line_string;
 use geo::LineString;
 use ndarray::prelude::*;
+use rayon::prelude::*;
 
 use super::SensParam;
 
@@ -10,10 +11,9 @@ pub fn smoothed_sensitivity_kernels(
     sp: &SensParam,
     smooth: i64,
 ) -> [Array2<f32>; 2] {
-    let dim: (usize, usize) = sp.arry2_dimension();
+    let dim: (usize, usize) = sp.sens_dimension();
     let mut avgphsens = Array2::<f32>::zeros(dim);
     let mut avgampsens = Array2::<f32>::zeros(dim);
-    let mut wgttemp = Array2::<f32>::zeros(dim);
 
     let alpha: f32 = 1. / (smooth.pow(2) as f32);
 
@@ -23,6 +23,7 @@ pub fn smoothed_sensitivity_kernels(
             // let x: f32 = sp.itvl_x(ix);
             // let y: f32 = sp.itvl_x(ix);
             let mut wgtsum = 0.;
+            let mut wgttemp = Array2::<f32>::zeros(dim);
 
             // use geo::line_string to make this
             let xy = xy_line_string(ix, iy, n);
@@ -57,13 +58,13 @@ pub fn _unsmoothed_sensitivity_kernels(
     amplitude: Vec<f32>,
     sp: &SensParam,
 ) -> [Array2<f32>; 2] {
-    let sumamp: f32 = amplitude.iter().sum();
-    let amplitude: Vec<f32> = amplitude.iter().map(|x| x / sumamp).collect();
+    let sumamp = amplitude.par_iter().sum::<f32>();
+    let amplitude: Vec<f32> = amplitude.par_iter().map(|x| x / sumamp).collect();
 
     let pi = std::f32::consts::PI;
-    let radius = 6371 as f32;
+    let radius = 6371.0_f32;
 
-    let dim = sp.arry2_dimension();
+    let dim = sp.sens_dimension();
     let mut phsens = Array2::<f32>::zeros(dim);
     let mut ampsens = Array2::<f32>::zeros(dim);
 
