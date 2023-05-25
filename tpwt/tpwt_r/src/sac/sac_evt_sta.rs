@@ -2,8 +2,8 @@ use pyo3::exceptions::PyException;
 use pyo3::prelude::*;
 use sacio::{Sac, SacError, SacString};
 
+/// Class SacEvtSta
 #[pyclass(text_signature = "(sac_file)")]
-/// Sac class
 pub struct Ses {
     file: String,
     sac: Sac,
@@ -21,7 +21,7 @@ impl Ses {
     }
 
     fn __repr__(&self) -> PyResult<String> {
-        Ok(format!("Info sac file: {}.", self.file))
+        Ok(format!("Info sac file: {}.", &self.file))
     }
 
     #[getter]
@@ -33,28 +33,28 @@ impl Ses {
         Ok(self.sac.dist_km())
     }
     #[getter]
+    fn station_name(&self) -> PyResult<String> {
+        Ok(self.sac.string(SacString::Station).to_string())
+    }
+    #[getter]
     fn max_amp(&self) -> PyResult<f32> {
         Ok(self.sac.max_amp())
     }
 
-    fn set_sac_head(
-        &mut self,
-        sta_name: &str,
-        sta_evt: [f32; 6],
-        channel: &str,
-        target: Option<&str>,
-    ) -> PyResult<String> {
+    fn set_sac_head(&mut self, sta_name: &str, sta_evt: [f32; 6], channel: &str) {
         let [stlo, stla, stel, evlo, evla, evdp] = sta_evt;
-        // chang station name and channel
+        // change station name and channel
         self.sac.set_string(SacString::Station, sta_name);
         self.sac.set_string(SacString::Component, channel);
 
         // set location both of station and event
         self.sac.set_station_location(stla, stlo, stel).unwrap();
-        to_pyerr(self.sac.set_event_location(evla, evlo, evdp))?;
+        self.sac.set_event_location(evla, evlo, evdp).unwrap();
+    }
 
+    fn to_file(&mut self, target: Option<&str>) -> PyResult<String> {
         // save to the target file if target given
-        let ffrom = &self.file;
+        let ffrom: &str = &self.file;
         let fto = if let Some(t) = target { t } else { &self.file };
         to_pyerr(self.sac.to_file(fto))?;
         Ok(f!("Setted head of {ffrom} to file {fto}."))

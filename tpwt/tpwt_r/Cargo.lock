@@ -1845,6 +1845,8 @@ dependencies = [
  "pyo3",
  "rayon",
  "sacio",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
