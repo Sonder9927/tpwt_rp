@@ -1,23 +1,27 @@
 use pyo3::prelude::*;
+use serde::Deserialize;
+
 use std::collections::HashMap;
 
-#[pyclass(text_signature = "(region)")]
 /// Region class
+#[pyclass(text_signature = "(region)")]
+#[derive(Deserialize, Debug)]
 pub struct Region {
     w: f64,
     e: f64,
     s: f64,
     n: f64,
 }
+
 #[pymethods]
 impl Region {
     #[new]
     fn new(region: HashMap<String, f64>) -> Self {
         Region {
-            w: region["west"],
-            e: region["east"],
-            s: region["south"],
-            n: region["north"],
+            w: region["w"],
+            e: region["e"],
+            s: region["s"],
+            n: region["n"],
         }
     }
 
@@ -60,13 +64,13 @@ impl Region {
 
     #[pyo3(text_signature = "($self)")]
     /// return back a list of [w, e, s, n] original.
-    fn original(&self) -> PyResult<[f64; 4]> {
+    pub fn to_list(&self) -> PyResult<[f64; 4]> {
         Ok([self.w, self.e, self.s, self.n])
     }
 
     #[pyo3(text_signature = "($self, x, y)")]
     /// return back a list of [w, e, s, n] expanded by x and y(optional)
-    fn expanded(&self, x: f64, y: Option<f64>) -> PyResult<[f64; 4]> {
+    fn expanded_list(&self, x: f64, y: Option<f64>) -> PyResult<[f64; 4]> {
         let y = if let Some(v) = y { v } else { x };
         Ok([self.w - x, self.e + x, self.s - y, self.n + y])
     }
