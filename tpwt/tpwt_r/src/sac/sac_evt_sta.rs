@@ -42,7 +42,7 @@ impl Ses {
         sta_name: &str,
         sta_evt: [f32; 6],
         channel: &str,
-        target: String,
+        target: Option<&str>,
     ) -> PyResult<String> {
         let [stlo, stla, stel, evlo, evla, evdp] = sta_evt;
         // chang station name and channel
@@ -53,9 +53,11 @@ impl Ses {
         self.sac.set_station_location(stla, stlo, stel).unwrap();
         to_pyerr(self.sac.set_event_location(evla, evlo, evdp))?;
 
-        // save to the target file
-        to_pyerr(self.sac.to_file(target))?;
-        Ok(format!("Write to the sac file {}\n", self.file))
+        // save to the target file if target given
+        let ffrom = &self.file;
+        let fto = if let Some(t) = target { t } else { &self.file };
+        to_pyerr(self.sac.to_file(fto))?;
+        Ok(f!("Setted head of {ffrom} to file {fto}."))
     }
 }
 

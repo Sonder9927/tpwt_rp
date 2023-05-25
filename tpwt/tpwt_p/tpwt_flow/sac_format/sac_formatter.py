@@ -15,8 +15,7 @@ event.station.LHZ.sac
 Then add information of both event and station to head of sac files in SAC directory
 '''
 
-from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from collections import namedtuple
 from pathlib import Path
 from icecream import ic
@@ -27,8 +26,6 @@ import subprocess
 from tpwt_p.rose import glob_patterns, re_create_dir
 from .obs_mod import Obs
 
-
-Param_evt = namedtuple("Param_evt", "out_dir cut_evt evt stas channel")
 
 class Pos:
     def __init__(self, x, y) -> None:
@@ -42,46 +39,45 @@ class Sac_Format:
         self.evt = pd.read_csv(evt, delim_whitespace=True, names=["evt", "lo", "la", "dp"], dtype={"evt": str}, index_col="evt")
         self.sta = pd.read_csv(sta, delim_whitespace=True, names=["sta", "lo", "la"], index_col="sta")
         ic(f"Hello, this is SAC formatter")
-        ic(self.channel)
 
     def evt_to_point(self, evt: str) -> Pos:
         return Pos(x=self.evt.lo[evt], y=self.evt.la[evt])
 
     def sta_to_points(self) -> dict[str, Pos]:
-        dl = self.sta.index
-        dd = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dl]
-        return dict(zip(dl, dd))
+        dk = self.sta.index
+        dv = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dk]
+        return dict(zip(dk, dv))
 
-    def get_SAC(self, target):
+    def format_to_dir(self, dir: str):
         # clear and re-create
-        self.target = re_create_dir(target)
+        target = re_create_dir(dir)
 
         # get list of events directories
         cut_evts = glob_patterns("glob", self.data, ["*/**"])
         stas = self.sta_to_points()
 
-        ps = [Param_evt(self.target, i, self.evt_to_point(i.name[:12]), stas, self.channel) for i in cut_evts]
+        with ProcessPoolExecutor(max_workers=5) as executor:
+            for e in cut_evts:
+                ep = self.evt_to_point(e.name[:12])
+                executor.submit(batch_event, target, e, ep, stas, self.channel)
 
-        # batch process
-        ic("batch processing...")
-        Pool(10).map(batch_event, ps)
 
-
-def batch_event(p):
+def batch_event(out_dir, cut_evt, evt, stas, channel):
     """
     batch function to process every event
     move events directories
     format sac files
     """
     # move
-    sac_evt = p.out_dir / p.cut_evt.name[:12]
-    shutil.copytree(p.cut_evt, sac_evt)
+    sac_evt = out_dir / cut_evt.name[:12]
+    shutil.copytree(cut_evt, sac_evt)
 
     # process every sac file
     sacs = glob_patterns("glob", sac_evt, ["*"])
 
     with ThreadPoolExecutor(max_workers=10) as pool:
-        pool.map(rename_ch, [p]*len(sacs), sacs)
+        for sac in sacs:
+            pool.submit(rename_ch, sac, evt, stas, channel)
 
 
 ###############################################################################
@@ -102,7 +98,7 @@ def format_sac_name(target: Path, channel):
     return Param_sac(sta_name, target_new)
 
 
-def ch_sac(target: Path, evt: Pos, sta: Pos, channel):
+def ch_sac(target: Path, evt: Pos, sta: Pos, sta_name, channel):
     """
     change head of sac file to generate dist information
     """
@@ -117,6 +113,7 @@ def ch_sac(target: Path, evt: Pos, sta: Pos, channel):
     s += f"ch stlo {sta.lo}\n"
     # s += f"ch stel {sta['dp'][sta_name]}\n"
     s += f"ch kcmpnm {channel}\n"
+    s += f"ch kstnm {sta_name}\n"
     s += "wh \n"
     s += "q \n"
 
@@ -133,11 +130,11 @@ def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
     obs.ch_obs()
 
 
-def rename_ch(p: Param_evt, sac):
+def rename_ch(sac, evt, stas, channel):
     # rename
-    res = format_sac_name(sac, p.channel)
+    res = format_sac_name(sac, channel)
     shutil.move(sac, res.sac)
 
     # change head
-    ch_sac(res.sac, p.evt, p.stas[res.sta], p.channel)
+    ch_sac(res.sac, evt, stas[res.sta], res.sta, channel)
     # ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)

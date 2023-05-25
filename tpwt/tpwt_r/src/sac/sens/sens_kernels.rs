@@ -22,7 +22,6 @@ pub fn smoothed_sensitivity_kernels(
         for iy in 0..n {
             // let x: f32 = sp.itvl_x(ix);
             // let y: f32 = sp.itvl_x(ix);
-            let mut wgtsum = 0.;
             let mut wgttemp = Array2::<f32>::zeros(dim);
 
             // use geo::line_string to make this
@@ -36,17 +35,19 @@ pub fn smoothed_sensitivity_kernels(
                     if distsq < 80. {
                         let v = (-distsq).exp();
                         wgttemp[[ixx, iyy]] = v;
-                        wgtsum += v;
                     }
                 }
             }
+            wgttemp /= wgttemp.sum();
 
-            for ixx in xy[0].x..xy[1].x {
-                for iyy in xy[0].y..xy[1].y {
-                    avgphsens[[ix, iy]] += phsens[[ixx, iyy]] * wgttemp[[ixx, iyy]] / wgtsum;
-                    avgampsens[[ix, iy]] += ampsens[[ixx, iyy]] * wgttemp[[ixx, iyy]] / wgtsum;
-                }
-            }
+            // for ixx in xy[0].x..xy[1].x {
+            //     for iyy in xy[0].y..xy[1].y {
+            //         avgphsens[[ix, iy]] += phsens[[ixx, iyy]] * wgttemp[[ixx, iyy]] / wgtsum;
+            //         avgampsens[[ix, iy]] += ampsens[[ixx, iyy]] * wgttemp[[ixx, iyy]] / wgtsum;
+            //     }
+            // }
+            avgphsens[[ix, iy]] += (phsens.clone() * wgttemp.clone()).sum();
+            avgampsens[[ix, iy]] += (ampsens.clone() * wgttemp).sum();
         }
     }
 

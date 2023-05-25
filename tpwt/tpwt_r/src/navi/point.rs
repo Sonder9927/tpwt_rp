@@ -23,6 +23,14 @@ impl Point {
                 Point { x, y }
             }
         }
+        // if let Some(l) = l {
+        //     let [x, y] = l;
+        //     Point { x, y }
+        // } else {
+        //     let x = x.unwrap();
+        //     let y = y.unwrap();
+        //     Point { x, y }
+        // }
     }
 
     fn __repr__(&self) -> String {
