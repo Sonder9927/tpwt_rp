@@ -30,7 +30,7 @@ class Evt_Cut:
         # batch process
         batch = 1_000
         sacs_batch_list = [sacs[i: i+batch] for i in range(0, len(sacs), batch)]
-        with ProcessPoolExecutor(max_workers=10) as executor:
+        with ProcessPoolExecutor(max_workers=5) as executor:
             for i, s in enumerate(sacs_batch_list):
                 executor.submit(batch_cut_event, i+1, s, mktraceiodb, cutevent, cat, time_delta, self.target)
 
