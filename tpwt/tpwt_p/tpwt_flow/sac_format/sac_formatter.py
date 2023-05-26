@@ -45,11 +45,11 @@ class Sac_Format:
         ic(f"Hello, this is SAC formatter")
 
     def evt_to_point(self, evt: str) -> Pos:
-        return Pos(x=self.evt.x[evt], y=self.evt.y[evt], z=self.evt.z[evt])
+        return Pos(x=self.evt.lo[evt], y=self.evt.la[evt], z=self.evt.dp[evt])
 
     def sta_to_points(self) -> dict[str, Pos]:
         dk = self.sta.index
-        dv = [Pos(x=self.sta.x[i], y=self.sta.y[i]) for i in dk]
+        dv = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dk]
         return dict(zip(dk, dv))
 
     def format_to_dir(self, dir: str):
