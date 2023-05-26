@@ -16,7 +16,6 @@ Then add information of both event and station to head of sac files in SAC direc
 '''
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from collections import namedtuple
 from pathlib import Path
 from icecream import ic
 import pandas as pd
@@ -28,24 +27,29 @@ from .obs_mod import Obs
 
 
 class Pos:
-    def __init__(self, x, y) -> None:
-        self.lo = x
-        self.la = y
+    def __init__(self, x, y, z=None) -> None:
+        self.x = x
+        self.y = y
+        self.z = z
 
 class Sac_Format:
     def __init__(self, data, *, evt, sta) -> None:
         self.data = Path(data)
         self.channel = "LHZ"
-        self.evt = pd.read_csv(evt, delim_whitespace=True, names=["evt", "lo", "la", "dp"], dtype={"evt": str}, index_col="evt")
-        self.sta = pd.read_csv(sta, delim_whitespace=True, names=["sta", "lo", "la"], index_col="sta")
+        self.evt = pd.read_csv(evt,
+            delim_whitespace=True, names=["evt", "lo", "la", "dp"], dtype={"evt": str},
+            header=None, index_col="evt")
+        self.sta = pd.read_csv(sta,
+            delim_whitespace=True, names=["sta", "lo", "la"],
+            header=None, index_col="sta")
         ic(f"Hello, this is SAC formatter")
 
     def evt_to_point(self, evt: str) -> Pos:
-        return Pos(x=self.evt.lo[evt], y=self.evt.la[evt])
+        return Pos(x=self.evt.x[evt], y=self.evt.y[evt], z=self.evt.z[evt])
 
     def sta_to_points(self) -> dict[str, Pos]:
         dk = self.sta.index
-        dv = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dk]
+        dv = [Pos(x=self.sta.x[i], y=self.sta.y[i]) for i in dk]
         return dict(zip(dk, dv))
 
     def format_to_dir(self, dir: str):
@@ -55,14 +59,17 @@ class Sac_Format:
         # get list of events directories
         cut_evts = glob_patterns("glob", self.data, ["*/**"])
         stas = self.sta_to_points()
+        err_sta = set()
 
         with ProcessPoolExecutor(max_workers=5) as executor:
             for e in cut_evts:
                 ep = self.evt_to_point(e.name[:12])
-                executor.submit(batch_event, target, e, ep, stas, self.channel)
+                future = executor.submit(batch_event, target, e, ep, stas, self.channel)
+                err_sta.update(future.result())
+        ic(err_sta)
 
 
-def batch_event(out_dir, cut_evt, evt, stas, channel):
+def batch_event(out_dir, cut_evt, ep, stas, channel):
     """
     batch function to process every event
     move events directories
@@ -74,10 +81,15 @@ def batch_event(out_dir, cut_evt, evt, stas, channel):
 
     # process every sac file
     sacs = glob_patterns("glob", sac_evt, ["*"])
+    err_sta = set()
 
     with ThreadPoolExecutor(max_workers=10) as pool:
         for sac in sacs:
-            pool.submit(rename_ch, sac, evt, stas, channel)
+            future = pool.submit(rename_ch, sac, ep, stas, channel)
+            res = future.result()
+            if res:
+                err_sta .update(res)
+    return err_sta
 
 
 ###############################################################################
@@ -88,14 +100,12 @@ def format_sac_name(target: Path, channel):
     rename and ch sac files
     """
     evt_name = target.parent.name
-    sta_name = target.name.split('.')[1]
+    sta_name = target.name.split('.')[1].upper()
     new_name = f"{evt_name}.{sta_name}.{channel}.sac"
 
     target_new = target.parent / new_name
 
-    Param_sac = namedtuple("Param_sac", "sta sac")
-
-    return Param_sac(sta_name, target_new)
+    return sta_name, target_new
 
 
 def ch_sac(target: Path, evt: Pos, sta: Pos, sta_name, channel):
@@ -106,12 +116,12 @@ def ch_sac(target: Path, evt: Pos, sta: Pos, sta_name, channel):
 
     s = "wild echo off \n"
     s += "r {} \n".format(target)
-    s += f"ch evla {evt.la}\n"
-    s += f"ch evlo {evt.lo}\n"
-    # s += "ch evdp {}\n".format(self.evt['dp'][evt_name])
-    s += f"ch stla {sta.la}\n"
-    s += f"ch stlo {sta.lo}\n"
-    # s += f"ch stel {sta['dp'][sta_name]}\n"
+    s += f"ch evlo {evt.x}\n"
+    s += f"ch evla {evt.y}\n"
+    s += f"ch evdp {evt.z}\n"
+    s += f"ch stlo {sta.x}\n"
+    s += f"ch stla {sta.y}\n"
+    # s += f"ch stel {sta.z}\n"
     s += f"ch kcmpnm {channel}\n"
     s += f"ch kstnm {sta_name}\n"
     s += "wh \n"
@@ -130,11 +140,17 @@ def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
     obs.ch_obs()
 
 
-def rename_ch(sac, evt, stas, channel):
+def rename_ch(sac, ep, stas, channel):
     # rename
-    res = format_sac_name(sac, channel)
-    shutil.move(sac, res.sac)
+    sta_name, sac_new = format_sac_name(sac, channel)
 
     # change head
-    ch_sac(res.sac, evt, stas[res.sta], res.sta, channel)
-    # ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
+    sp = stas.get(sta_name)
+    if sp == None:
+        return sta_name
+    else:
+        shutil.move(sac, sac_new)
+        ch_sac(sac_new, ep, sp, sta_name, channel)
+        # ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
+        return None
+        
