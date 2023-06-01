@@ -29,7 +29,7 @@ def evt_cut():
 def sac_format(bp):
     sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], evt=param.targets["evt_all_lst"], sta=bp.sta)
     sac.make_sac(bp.sac)
-    sac.filter_event_lst(bp.evt)
+    sac.filter_event_lst(bp.sac, bp.evt)
 
 
 def tpwt_check(data: str):
