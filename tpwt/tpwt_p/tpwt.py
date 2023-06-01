@@ -49,7 +49,7 @@ def quanlity_control(bp):
     # eq = data.eqlistper()
     return "eq"
 
-def tpwt_run(param_json: str):
+def main(param_json: str):
     # start
     ic(tpwt_r.hello_name(__author__))
 
@@ -110,4 +110,4 @@ def tpwt_run(param_json: str):
 
 
 if __name__ == "__main__":
-    tpwt_run("param.json")
+    main("param.json")
