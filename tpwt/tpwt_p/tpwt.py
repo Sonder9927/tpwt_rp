@@ -21,15 +21,14 @@ def evts_from_30_to_120(evt1, evt2):
     evt.evt_lst(param.targets["evt_lst"], pattern, lst_form)
 
 
-def evt_cut(patterns):
+def evt_cut():
     data = tpwt_flow.Evt_Cut(param.targets["origin"])  # if set z_pattern to '1' the new file will be `file_1`
-    data.get_Z_1Hz(param.targets["only_Z_1Hz"], patterns)  # get only_Z_1Hz/file_origin{z_pattern} and set self.only_Z_1Hz=Path(only_Z_1Hz)
     data.cut_event(param.targets["cut_dir"], param.targets["evt_cat"], param.filter["time_delta"])  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
 def sac_format(bp):
     sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], evt=bp.evt, sta=bp.sta)
-    sac.get_SAC(bp.sac)
+    sac.make_sac(bp.sac)
 
 
 def tpwt_check(data: str):

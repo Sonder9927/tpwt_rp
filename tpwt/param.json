@@ -47,7 +47,6 @@
     "evt_lst": "TPWT/info/event.lst",
     "sta_lst": "TPWT/info/station.lst",
     "state": "TPWT/state/state.json",
-    "only_Z_1Hz": "target/only_Z_1Hz",
     "cut_dir": "target/event_cut",
     "sac": "target/SAC",
     "path": "target/path",
@@ -94,8 +93,8 @@
       "n": 35
     },
     "ref_sta": [
-      120.5,
-      32
+      120.9,
+      30.965
     ]
   }
 }

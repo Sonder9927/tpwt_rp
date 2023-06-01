@@ -22,6 +22,7 @@ import pandas as pd
 import os, shutil
 import subprocess
 
+from tpwt_r import Ses
 from tpwt_p.rose import glob_patterns, re_create_dir
 from .obs_mod import Obs
 
@@ -44,18 +45,13 @@ class Sac_Format:
             header=None, index_col="sta")
         ic(f"Hello, this is SAC formatter")
 
-    def evt_to_point(self, evt: str) -> Pos:
-        return Pos(x=self.evt.lo[evt], y=self.evt.la[evt], z=self.evt.dp[evt])
-
-    def sta_to_points(self) -> dict[str, Pos]:
-        dk = self.sta.index
-        dv = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dk]
-        return dict(zip(dk, dv))
-
-    def format_to_dir(self, dir: str):
+    def make_sac(self, dir: str):
         # clear and re-create
         target = re_create_dir(dir)
+        self.format_to_dir(target)
+        self.dist_km_filter(target)
 
+    def format_to_dir(self, target: Path):
         # get list of events directories
         cut_evts = glob_patterns("glob", self.data, ["*/**"])
         stas = self.sta_to_points()
@@ -67,6 +63,20 @@ class Sac_Format:
                 future = executor.submit(batch_event, target, e, ep, stas, self.channel)
                 err_sta.update(future.result())
         ic(err_sta)
+
+    def dist_km_filter(self, dp: Path):
+        sacs = list(dp.rglob("*.sac"))
+        sacss = [sacs[i:200] for i in range(0, len(sacs), 200)]
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            executor.map(batch_dist, sacss)
+
+    def evt_to_point(self, evt: str) -> Pos:
+        return Pos(x=self.evt.lo[evt], y=self.evt.la[evt], z=self.evt.dp[evt])
+
+    def sta_to_points(self) -> dict[str, Pos]:
+        dk = self.sta.index
+        dv = [Pos(x=self.sta.lo[i], y=self.sta.la[i]) for i in dk]
+        return dict(zip(dk, dv))
 
 
 def batch_event(out_dir, cut_evt, ep, stas, channel):
@@ -88,12 +98,41 @@ def batch_event(out_dir, cut_evt, ep, stas, channel):
             future = pool.submit(rename_ch, sac, ep, stas, channel)
             res = future.result()
             if res:
-                err_sta .update(res)
+                err_sta.update([res])
+
     return err_sta
+
+
+# !This step can be putted into batch_event later.
+def batch_dist(sacs: list[Path]):
+    rad = 111
+    rad30 = rad * 30
+    rad120 = rad * 120
+    for sp in sacs:
+        sac = Ses(str(sp))
+        dist = sac.dist_km
+        if not all([dist>rad30, dist<rad120]):
+            sp.unlink()
 
 
 ###############################################################################
 
+
+def rename_ch(sac, ep, stas, channel):
+    # rename
+    sta_name, sac_new = format_sac_name(sac, channel)
+
+    # change head
+    sp = stas.get(sta_name)
+    if sp == None:
+        sac.unlink()
+        return sta_name
+    else:
+        shutil.move(sac, sac_new)
+        ch_sac(sac_new, ep, sp, sta_name, channel)
+        # ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
+        return None
+        
 
 def format_sac_name(target: Path, channel):
     """
@@ -139,18 +178,3 @@ def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
     obs = Obs(target, evt, sta, channel)
     obs.ch_obs()
 
-
-def rename_ch(sac, ep, stas, channel):
-    # rename
-    sta_name, sac_new = format_sac_name(sac, channel)
-
-    # change head
-    sp = stas.get(sta_name)
-    if sp == None:
-        return sta_name
-    else:
-        shutil.move(sac, sac_new)
-        ch_sac(sac_new, ep, sp, sta_name, channel)
-        # ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
-        return None
-        

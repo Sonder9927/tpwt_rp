@@ -29,7 +29,7 @@ impl Ses {
         Ok(self.sac.delta())
     }
     #[getter]
-    fn disk_km(&self) -> PyResult<f32> {
+    fn dist_km(&self) -> PyResult<f32> {
         Ok(self.sac.dist_km())
     }
     #[getter]
