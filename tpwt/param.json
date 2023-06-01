@@ -44,6 +44,7 @@
     "evt30": "TPWT/info/event_30.csv",
     "evt120": "TPWT/info/event_120.csv",
     "evt_cat": "TPWT/info/event.cat",
+    "evt_all_lst": "TPWT/info/event_all.lst",
     "evt_lst": "TPWT/info/event.lst",
     "sta_lst": "TPWT/info/station.lst",
     "state": "TPWT/state/state.json",

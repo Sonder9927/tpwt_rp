@@ -51,6 +51,18 @@ class Sac_Format:
         self.format_to_dir(target)
         self.dist_km_filter(target)
 
+    def filter_event_lst(self, dir: str, el: str):
+        tp = Path(dir)
+        if not tp.exists():
+            raise FileNotFoundError(f"Not found {tp}!")
+
+        evt_use = [d.name for d in tp.glob("*/**")]
+        evt_all = self.evt.index.to_list()
+
+        drop_lst = [e for e in evt_all if not e in evt_use]
+        evt = self.evt.drop(drop_lst)
+        evt.to_csv(el, header=False, sep=" ")
+
     def format_to_dir(self, target: Path):
         # get list of events directories
         cut_evts = glob_patterns("glob", self.data, ["*/**"])

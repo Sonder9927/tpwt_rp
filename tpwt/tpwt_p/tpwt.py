@@ -18,7 +18,7 @@ def evts_from_30_to_120(evt1, evt2):
     cat_form = "%Y/%m/%d,%H:%M:%S"
     evt.evt_cat(param.targets["evt_cat"], pattern, cat_form)
     lst_form = "%Y%m%d%H%M"
-    evt.evt_lst(param.targets["evt_lst"], pattern, lst_form)
+    evt.evt_lst(param.targets["evt_all_lst"], pattern, lst_form)
 
 
 def evt_cut():
@@ -27,8 +27,9 @@ def evt_cut():
 
 
 def sac_format(bp):
-    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], evt=bp.evt, sta=bp.sta)
+    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], evt=param.targets["evt_all_lst"], sta=bp.sta)
     sac.make_sac(bp.sac)
+    sac.filter_event_lst(bp.evt)
 
 
 def tpwt_check(data: str):
