@@ -3,11 +3,12 @@ use serde::Deserialize;
 use pyo3::prelude::*;
 
 // #[derive(Debug)]
-pub enum ParamString {
+pub enum TargetString {
     OgData,
     Evt30,
     Evt120,
     EvtCat,
+    EvtAllLst,
     EvtLst,
     StaLst,
     CutDir,
@@ -25,6 +26,7 @@ pub struct TargetParam {
     og_data: String,
     evt30: String,
     evt120: String,
+    evt_all_lst: String,
     evt_cat: String,
     evt_lst: String,
     sta_lst: String,
@@ -34,21 +36,23 @@ pub struct TargetParam {
     all_events: String,
     sens: String,
 }
+
 impl TargetParam {
-    pub fn get(&self, key: ParamString) -> &str {
+    pub fn get(&self, key: TargetString) -> &str {
         match key {
-            ParamString::OgData => &self.og_data,
-            ParamString::Evt30 => &self.evt30,
-            ParamString::Evt120 => &self.evt120,
-            ParamString::EvtCat => &self.evt_cat,
-            ParamString::EvtLst => &self.evt_lst,
-            ParamString::StaLst => &self.sta_lst,
-            ParamString::CutDir => &self.cut_dir,
-            ParamString::Sac => &self.sac,
-            ParamString::Path => &self.path,
-            ParamString::AllEvents => &self.all_events,
-            ParamString::Sens => &self.sens,
-            ParamString::State => &self.state,
+            TargetString::OgData => &self.og_data,
+            TargetString::Evt30 => &self.evt30,
+            TargetString::Evt120 => &self.evt120,
+            TargetString::EvtAllLst => &self.evt_all_lst,
+            TargetString::EvtCat => &self.evt_cat,
+            TargetString::EvtLst => &self.evt_lst,
+            TargetString::StaLst => &self.sta_lst,
+            TargetString::CutDir => &self.cut_dir,
+            TargetString::Sac => &self.sac,
+            TargetString::Path => &self.path,
+            TargetString::AllEvents => &self.all_events,
+            TargetString::Sens => &self.sens,
+            TargetString::State => &self.state,
         }
     }
 }

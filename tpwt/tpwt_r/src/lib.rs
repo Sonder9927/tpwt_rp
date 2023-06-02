@@ -3,9 +3,10 @@ mod navi;
 mod sac;
 mod param;
 
-use crate::navi::point::Point;
-use crate::navi::region::Region;
-use crate::sac::sac_evt_sta::Ses;
+use crate::navi::Point;
+use crate::navi::Region;
+use crate::sac::Ses;
+
 use pyo3::prelude::*;
 
 #[macro_use]
@@ -20,7 +21,7 @@ fn tpwt_r(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(sac::sac_sens, m)?)?;
     m.add_function(wrap_pyfunction!(navi::geo_xyz::convex_hull, m)?)?;
     m.add_function(wrap_pyfunction!(navi::geo_xyz::points_in_hull, m)?)?;
-    m.add_function(wrap_pyfunction!(param::param_json::load_param, m)?)?;
+    m.add_function(wrap_pyfunction!(param::load_param, m)?)?;
     m.add_class::<Ses>()?;
     m.add_class::<Point>()?;
     m.add_class::<Region>()?;

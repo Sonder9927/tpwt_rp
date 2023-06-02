@@ -1,8 +1,8 @@
 from icecream import ic
 
-from tpwt_p import tpwt_flow
-from tpwt_p.param import Param
-from tpwt_p.check import Check_In
+# from .tpwt_p import tpwt_flow
+from . import tpwt_flow
+from .check import Check_In
 # from tpwt_p.info_per import period_info
 import tpwt_r
 
@@ -10,26 +10,29 @@ import tpwt_r
 __author__ = "Sonder"
 
 
-def evts_from_30_to_120(evt1, evt2):
-    evt = tpwt_flow.Evt_Make(evt1, evt2)
+def evts_from_30_to_120(param):
+    evt = tpwt_flow.Evt_Make(param.target("evt_30"), param.target("evt_120"))
     evt.concat()
-    evt.cut_time_delta(param.filter["time_delta"])
+    evt.cut_time_delta(param.parameter["time_delta"])
     pattern = "%Y-%m-%dT%H:%M:%S"
     cat_form = "%Y/%m/%d,%H:%M:%S"
-    evt.evt_cat(param.targets["evt_cat"], pattern, cat_form)
+    evt.evt_cat(param.target("evt_cat"), pattern, cat_form)
     lst_form = "%Y%m%d%H%M"
-    evt.evt_lst(param.targets["evt_all_lst"], pattern, lst_form)
+    evt.evt_lst(param.target("evt_all_lst"), pattern, lst_form)
 
 
-def evt_cut():
-    data = tpwt_flow.Evt_Cut(param.targets["origin"])  # if set z_pattern to '1' the new file will be `file_1`
-    data.cut_event(param.targets["cut_dir"], param.targets["evt_cat"], param.filter["time_delta"])  # if cut_from: use cut_from else: use self.only_Z_1Hz
+def evt_cut(param):
+    data = tpwt_flow.Evt_Cut(param.target("og_data"))  # if set z_pattern to '1' the new file will be `file_1`
+    data.cut_event(param.target("cut_dir"), param.target("evt_cat"), param.parameter("time_delta"))  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
-def sac_format(bp):
-    sac = tpwt_flow.Sac_Format(param.targets["cut_dir"], evt=param.targets["evt_all_lst"], sta=bp.sta)
-    sac.make_sac(bp.sac)
-    sac.filter_event_lst(bp.sac, bp.evt)
+def sac_format(param):
+    sac = tpwt_flow.Sac_Format(
+            param.target("cut_dir"), 
+            evt=param.target("evt_all_lst"), 
+            sta=param.target("sta_lst"))
+    sac.make_sac(param.target("sac"))
+    sac.filter_event_lst(param.target("sac"), param.target("evt_lst"))
 
 
 def tpwt_check(data: str):
@@ -38,13 +41,13 @@ def tpwt_check(data: str):
     ic(message)
 
 
-def quanlity_control(bp):
+def quanlity_control(param):
     # data = tpwt_flow.Data_Filter(bp, param.model["periods"])
-    data = tpwt_flow.Data_Filter(bp, [20, 25])
+    data = tpwt_flow.Data_Filter(param, [20, 25])
     # data.path = param.targets["path"]
     # data.aftan_snr(param.targets["path"])
-    snr = param.filter["snr"][3]  # 15
-    tcut = param.filter["tcut"][2]  # 8
+    snr = param.parameter("snr")
+    tcut = param.parameter("tcut")
     data.sta_dist(snr, tcut)
     # eq = data.eqlistper()
     return "eq"
@@ -53,39 +56,26 @@ def main(param_json: str):
     # start
     ic(tpwt_r.hello_name(__author__))
 
-    global param
     # get parameters
-    param = Param(param_json)
-    state = param.state()
-    bp = param.bound_param()  # bp.data = Path(bp.sac)
+    param = tpwt_r.load_param(param_json)
 
     # get event lst and cat from 30 to 120
-    if state.check_state("evts"):
-        evts_from_30_to_120(param.targets["evt30"], param.targets["evt120"])
-        state.change_state("evts", False)
+    evts_from_30_to_120(param)
 
     # data cut event
-    if state.check_state("cut"):
-        search = ["*Z.sac", "*Z.SAC"]
-        evt_cut(search)
-        state.change_state("cut", False)
+    evt_cut(param)
 
     # process sac files
-    if state.check_state("sac"):
-        sac_format(bp)
-        state.change_state("sac", False)
+    sac_format(param)
 
     # check data format
-    if state.check_state("check"):
-        tpwt_check(bp.sac)
+    tpwt_check(param.target("sac"))
 
     # mass control
-    if state.check_state("control"):
-        eq = quanlity_control(bp)
-        ic(eq)
+    eq = quanlity_control(param)
+    ic(eq)
         # state.change_state("control", False)
 
-    # region = tpwt_r.Region(param.region)
     # # iterater
     # tpwt = tpwt_flow.TPWT_Iter(region, smooth, damping)
     # # tpwt.step_4()

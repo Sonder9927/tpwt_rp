@@ -123,7 +123,7 @@ def batch_dist(sacs: list[Path]):
     for sp in sacs:
         sac = Ses(str(sp))
         dist = sac.dist_km
-        if not all([dist>rad30, dist<rad120]):
+        if dist<rad30 or dist>rad120:
             sp.unlink()
 
 

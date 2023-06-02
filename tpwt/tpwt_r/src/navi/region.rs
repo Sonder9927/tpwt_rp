@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 /// Region class
 #[pyclass(text_signature = "(region)")]
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Region {
     w: f64,
     e: f64,

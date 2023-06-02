@@ -1,14 +1,13 @@
-mod filter_param;
-mod inverse_param;
 mod model_param;
+mod parameters;
 mod target_param;
 
-use filter_param::FilterParam;
-use inverse_param::InverseParam;
-use model_param::ModelParam;
-use target_param::{ParamString, TargetParam};
+use crate::navi::region::Region;
 
-use rayon::prelude::*;
+use model_param::ModelParam;
+use parameters::{FixedParam, ParamString, TestingParam};
+use target_param::{TargetParam, TargetString};
+
 use serde::Deserialize;
 use serde_json;
 
@@ -34,87 +33,63 @@ pub fn load_param(path: &str) -> PyResult<Param> {
 #[pyclass]
 #[derive(Deserialize, Debug)]
 pub struct Param {
-    inverse: InverseParam,
-    filter: FilterParam,
+    testing: TestingParam,
+    fixed: FixedParam,
     targets: TargetParam,
     model: ModelParam,
 }
 
 #[pymethods]
 impl Param {
-    // inverse
-    pub fn damping(&self) -> PyResult<f64> {
-        Ok(self.inverse.damping)
-    }
-    pub fn smooth(&self) -> PyResult<i32> {
-        Ok(self.inverse.smooth)
-    }
-
-    // filter
-    pub fn snr(&self) -> PyResult<i32> {
-        Ok(self.filter.snr)
-    }
-    pub fn tcut(&self) -> PyResult<i32> {
-        Ok(self.filter.tcut)
-    }
-    pub fn time_delta(&self) -> PyResult<i32> {
-        Ok(self.filter.time_delta)
-    }
-    pub fn dist(&self) -> PyResult<i32> {
-        Ok(self.filter.dist)
-    }
-    pub fn nsta(&self) -> PyResult<i32> {
-        Ok(self.filter.nsta)
-    }
-    pub fn stacut_per(&self) -> PyResult<f64> {
-        Ok(self.filter.stacut_per)
-    }
-    pub fn ampcut(&self) -> PyResult<f64> {
-        Ok(self.filter.ampcut)
-    }
-    pub fn tevtrmscut(&self) -> PyResult<f64> {
-        Ok(self.filter.tevtrmscut)
-    }
-    pub fn ampevtrmscut(&self) -> PyResult<f64> {
-        Ok(self.filter.ampevtrmscut)
-    }
-    pub fn dcheck(&self) -> PyResult<f64> {
-        Ok(self.filter.dcheck)
-    }
-    pub fn dvel(&self) -> PyResult<f64> {
-        Ok(self.filter.dvel)
+    pub fn parameter(&self, f: &str) -> PyResult<f64> {
+        match f {
+            // testing parameters
+            "smooth" => Ok(self.testing.get(ParamString::Smooth)),
+            "damping" => Ok(self.testing.get(ParamString::Damping)),
+            "snr" => Ok(self.testing.get(ParamString::Snr)),
+            "tcut" => Ok(self.testing.get(ParamString::Tcut)),
+            "nsta" => Ok(self.testing.get(ParamString::Nsta)),
+            // fixed parameters
+            "timedelta" => Ok(self.fixed.get(ParamString::TimeDelta)),
+            "dist" => Ok(self.fixed.get(ParamString::Dist)),
+            "stacutper" => Ok(self.fixed.get(ParamString::StaCutPer)),
+            "ampcut" => Ok(self.fixed.get(ParamString::AmpCut)),
+            "tevtrmscut" => Ok(self.fixed.get(ParamString::TevtrmsCut)),
+            "ampevtrmscut" => Ok(self.fixed.get(ParamString::AmpEvtrmsCut)),
+            "dcheck" => Ok(self.fixed.get(ParamString::Dcheck)),
+            "dvel" => Ok(self.fixed.get(ParamString::Dvel)),
+            _ => Err(PyKeyError::new_err("Key Error!")),
+        }
     }
     pub fn channel(&self) -> PyResult<String> {
-        Ok(self.filter.channel.to_string())
+        Ok(self.fixed.channel())
     }
 
     // targets
     pub fn target(&self, f: &str) -> PyResult<&str> {
         match f {
-            "og_data" => Ok(self.targets.get(ParamString::OgData)),
-            "evt30" => Ok(self.targets.get(ParamString::Evt30)),
-            "evt120" => Ok(self.targets.get(ParamString::Evt120)),
-            "evt_cat" => Ok(self.targets.get(ParamString::EvtCat)),
-            "evt_lst" => Ok(self.targets.get(ParamString::EvtLst)),
-            "sta_lst" => Ok(self.targets.get(ParamString::StaLst)),
-            "cut_dir" => Ok(self.targets.get(ParamString::CutDir)),
-            "sac" => Ok(self.targets.get(ParamString::Sac)),
-            "path" => Ok(self.targets.get(ParamString::Path)),
-            "all_events" => Ok(self.targets.get(ParamString::AllEvents)),
-            "sens" => Ok(self.targets.get(ParamString::Sens)),
-            "state" => Ok(self.targets.get(ParamString::State)),
+            "og_data" => Ok(self.targets.get(TargetString::OgData)),
+            "evt30" => Ok(self.targets.get(TargetString::Evt30)),
+            "evt120" => Ok(self.targets.get(TargetString::Evt120)),
+            "evt_all_lst" => Ok(self.targets.get(TargetString::EvtAllLst)),
+            "evt_cat" => Ok(self.targets.get(TargetString::EvtCat)),
+            "evt_lst" => Ok(self.targets.get(TargetString::EvtLst)),
+            "sta_lst" => Ok(self.targets.get(TargetString::StaLst)),
+            "cut_dir" => Ok(self.targets.get(TargetString::CutDir)),
+            "sac" => Ok(self.targets.get(TargetString::Sac)),
+            "path" => Ok(self.targets.get(TargetString::Path)),
+            "all_events" => Ok(self.targets.get(TargetString::AllEvents)),
+            "sens" => Ok(self.targets.get(TargetString::Sens)),
+            "state" => Ok(self.targets.get(TargetString::State)),
             _ => Err(PyKeyError::new_err("Key Error!")),
         }
     }
     // model
-    pub fn vps(&self) -> PyResult<Vec<(f64, i32)>> {
-        let v = self.model.vels.clone();
-        let p = self.model.periods.clone();
-        let vps: Vec<(f64, i32)> = v.into_par_iter().zip(p.into_par_iter()).collect();
-        Ok(vps)
+    pub fn vp_pairs(&self) -> PyResult<Vec<(f64, i32)>> {
+        Ok(self.model.vp_pairs())
     }
-    pub fn region(&self) -> PyResult<[f64; 4]> {
-        self.model.region.to_list()
+    pub fn region(&self) -> PyResult<Region> {
+        Ok(self.model.region())
     }
     pub fn ref_sta(&self) -> PyResult<[f64; 2]> {
         Ok(self.model.ref_sta)
