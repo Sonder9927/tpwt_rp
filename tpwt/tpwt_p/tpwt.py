@@ -13,7 +13,7 @@ __author__ = "Sonder"
 def evts_from_30_to_120(param):
     evt = tpwt_flow.Evt_Make(param.target("evt30"), param.target("evt120"))
     evt.concat()
-    evt.cut_time_delta(param.parameter["time_delta"])
+    evt.cut_time_delta(param.parameter("time_delta"))
     pattern = "%Y-%m-%dT%H:%M:%S"
     cat_form = "%Y/%m/%d,%H:%M:%S"
     evt.evt_cat(param.target("evt_cat"), pattern, cat_form)
