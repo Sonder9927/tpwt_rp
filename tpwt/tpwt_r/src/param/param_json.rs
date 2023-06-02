@@ -13,10 +13,8 @@ use serde_json;
 
 use pyo3::exceptions::PyKeyError;
 use pyo3::prelude::*;
-// use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
-// use std::path::Path;
 
 #[pyfunction]
 pub fn load_param(path: &str) -> PyResult<Param> {
@@ -26,7 +24,7 @@ pub fn load_param(path: &str) -> PyResult<Param> {
     let reader = BufReader::new(file);
 
     let p = serde_json::from_reader(reader).unwrap();
-    println!("Loading completed!");
+    println!("Loaded Param from file '{path}'!");
     Ok(p)
 }
 
@@ -50,7 +48,7 @@ impl Param {
             "tcut" => Ok(self.testing.get(ParamString::Tcut)),
             "nsta" => Ok(self.testing.get(ParamString::Nsta)),
             // fixed parameters
-            "time_delta" => Ok(self.fixed.get(ParamString::TimeDelta)),
+            "timedelta" => Ok(self.fixed.get(ParamString::TimeDelta)),
             "dist" => Ok(self.fixed.get(ParamString::Dist)),
             "stacutper" => Ok(self.fixed.get(ParamString::StaCutPer)),
             "ampcut" => Ok(self.fixed.get(ParamString::AmpCut)),
@@ -85,13 +83,16 @@ impl Param {
         }
     }
     // model
-    pub fn vp_pairs(&self) -> PyResult<Vec<(f64, i32)>> {
-        Ok(self.model.vp_pairs())
+    pub fn pv_pairs(&self) -> PyResult<Vec<(i32, f64)>> {
+        Ok(self.model.pv_pairs())
+    }
+    pub fn periods(&self) -> PyResult<Vec<i32>> {
+        Ok(self.model.periods())
     }
     pub fn region(&self) -> PyResult<Region> {
         Ok(self.model.region())
     }
     pub fn ref_sta(&self) -> PyResult<[f64; 2]> {
-        Ok(self.model.ref_sta)
+        Ok(self.model.ref_sta())
     }
 }

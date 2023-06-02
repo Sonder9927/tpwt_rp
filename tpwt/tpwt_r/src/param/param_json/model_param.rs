@@ -1,5 +1,3 @@
-// use ndarray::Array2;
-use rayon::prelude::*;
 use serde::Deserialize;
 
 use pyo3::prelude::*;
@@ -9,25 +7,33 @@ use crate::navi::region::Region;
 #[pyclass]
 #[derive(Deserialize, Debug)]
 pub struct ModelParam {
-    pub periods: Vec<i32>,
-    pub vels: Vec<f64>,
-    // vps: Array2<f64>,
-    pub ref_sta: [f64; 2],
+    pvs: Vec<(i32, f64)>,
+    ref_sta: [f64; 2],
     region: Region,
 }
 
 impl ModelParam {
-    pub fn vp_pairs(&self) -> Vec<(f64, i32)> {
-        let v = self.vels.clone();
-        let p = self.periods.clone();
-        if v.len() == p.len() {
-            let vps: Vec<(f64, i32)> = v.into_par_iter().zip(p.into_par_iter()).collect();
-            vps
-        } else {
-            panic!("#vels /= #periods");
+    pub fn pv_pairs(&self) -> Vec<(i32, f64)> {
+        self.pvs.clone()
+    }
+    pub fn periods(&self) -> Vec<i32> {
+        let mut ps = Vec::new();
+        for (p, _) in &self.pvs {
+            ps.push(*p)
         }
+        ps
+    }
+    pub fn vels(&self) -> Vec<f64> {
+        let mut vs = Vec::new();
+        for (_, v) in &self.pvs {
+            vs.push(*v)
+        }
+        vs
     }
     pub fn region(&self) -> Region {
         self.region.clone()
+    }
+    pub fn ref_sta(&self) -> [f64; 2] {
+        self.ref_sta
     }
 }
