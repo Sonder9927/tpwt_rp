@@ -50,7 +50,7 @@ impl Param {
             "tcut" => Ok(self.testing.get(ParamString::Tcut)),
             "nsta" => Ok(self.testing.get(ParamString::Nsta)),
             // fixed parameters
-            "timedelta" => Ok(self.fixed.get(ParamString::TimeDelta)),
+            "time_delta" => Ok(self.fixed.get(ParamString::TimeDelta)),
             "dist" => Ok(self.fixed.get(ParamString::Dist)),
             "stacutper" => Ok(self.fixed.get(ParamString::StaCutPer)),
             "ampcut" => Ok(self.fixed.get(ParamString::AmpCut)),
