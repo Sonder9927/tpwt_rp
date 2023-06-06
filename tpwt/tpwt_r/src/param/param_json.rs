@@ -18,7 +18,6 @@ use std::io::BufReader;
 
 #[pyfunction]
 pub fn load_param(path: &str) -> PyResult<Param> {
-    println_f!("Loading Param from file {path}...");
     // deserialize param from json file.
     let file = File::open(path)?;
     let reader = BufReader::new(file);
