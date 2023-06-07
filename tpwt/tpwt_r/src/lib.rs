@@ -18,7 +18,7 @@ fn tpwt_r(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(hello::hello, m)?)?;
     m.add_function(wrap_pyfunction!(hello::hello_name, m)?)?;
 
-    m.add_function(wrap_pyfunction!(sac::sac_sens_new, m)?)?;
+    m.add_function(wrap_pyfunction!(sac::sac_sens_new_period, m)?)?;
     m.add_function(wrap_pyfunction!(sac::sac_sens, m)?)?;
 
     m.add_function(wrap_pyfunction!(navi::geo_xyz::convex_hull, m)?)?;

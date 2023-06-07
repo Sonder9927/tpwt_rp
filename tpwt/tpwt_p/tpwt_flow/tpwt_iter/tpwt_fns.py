@@ -40,7 +40,7 @@ def sensitivity_TPWT(per, vel, smooth, wave_type="rayleigh", *, out_dir=None, bi
         f'w {sac_cut}',
         'fft',
         'wsp',
-        'q',
+        'q\n',
     ]
     s = '\n'.join(s_list)
     subprocess.Popen(['sac'], stdin=subprocess.PIPE).communicate(s.encode())

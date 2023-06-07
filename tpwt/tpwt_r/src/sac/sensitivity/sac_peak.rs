@@ -1,10 +1,7 @@
 use sacio::Sac;
 
 pub fn get_peak_data(sac_file: &str) -> [Vec<f32>; 2] {
-    let sac = match Sac::from_file(sac_file) {
-        Ok(s) => s,
-        Err(_) => panic!("Sac read Error!"),
-    };
+    let sac = Sac::from_file(sac_file).unwrap();
 
     let npts = sac.npts() as usize;
     let b = sac.b();
