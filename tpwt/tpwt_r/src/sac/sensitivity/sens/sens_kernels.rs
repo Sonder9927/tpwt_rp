@@ -15,13 +15,13 @@ pub fn smoothed_sensitivity_kernels(
     let mut avgphsens = Array2::<f32>::zeros(dim);
     let mut avgampsens = Array2::<f32>::zeros(dim);
 
-    let alpha: f32 = 1. / (smooth.pow(2) as f32);
+    let alpha = 1. / (smooth.pow(2) as f32);
 
     let n = sp.itvl.nx();
     for ix in 0..n {
         for iy in 0..n {
-            // let x: f32 = sp.itvl_x(ix);
-            // let y: f32 = sp.itvl_x(ix);
+            let x: f32 = sp.itvl.x(ix);
+            let y: f32 = sp.itvl.x(iy);
             let mut wgttemp = Array2::<f32>::zeros(dim);
 
             // use geo::line_string to make this
@@ -29,9 +29,9 @@ pub fn smoothed_sensitivity_kernels(
 
             for ixx in xy[0].x..xy[1].x {
                 for iyy in xy[0].y..xy[1].y {
-                    let xx: f32 = sp.itvl_x(ixx);
-                    let yy: f32 = sp.itvl_x(iyy);
-                    let distsq: f32 = alpha * ((xx).powi(2) + (yy).powi(2));
+                    let xx: f32 = sp.itvl.x(ixx);
+                    let yy: f32 = sp.itvl.x(iyy);
+                    let distsq: f32 = alpha * ((xx - x).powi(2) + (yy - y).powi(2));
                     if distsq < 80. {
                         let v = (-distsq).exp();
                         wgttemp[[ixx, iyy]] = v;
@@ -39,13 +39,6 @@ pub fn smoothed_sensitivity_kernels(
                 }
             }
             wgttemp /= wgttemp.sum();
-
-            // for ixx in xy[0].x..xy[1].x {
-            //     for iyy in xy[0].y..xy[1].y {
-            //         avgphsens[[ix, iy]] += phsens[[ixx, iyy]] * wgttemp[[ixx, iyy]] / wgtsum;
-            //         avgampsens[[ix, iy]] += ampsens[[ixx, iyy]] * wgttemp[[ixx, iyy]] / wgtsum;
-            //     }
-            // }
             avgphsens[[ix, iy]] += (phsens.clone() * wgttemp.clone()).sum();
             avgampsens[[ix, iy]] += (ampsens.clone() * wgttemp).sum();
         }
@@ -63,6 +56,7 @@ pub fn _unsmoothed_sensitivity_kernels(
     let amplitude: Vec<f32> = amplitude.par_iter().map(|x| x / sumamp).collect();
 
     let pi = std::f32::consts::PI;
+    let frac_pi_4 = std::f32::consts::FRAC_PI_4;
     let radius = 6371.0_f32;
 
     let dim = sp.sens_dimension();
@@ -72,15 +66,16 @@ pub fn _unsmoothed_sensitivity_kernels(
     for (&ifreq, &iamp) in freq.iter().zip(amplitude.iter()) {
         let period = 1. / ifreq;
         let lambda = period * sp.phvel;
-        let kk = 2. * pi / lambda * radius;
+        let kk = 2. * pi / lambda.floor() * radius; // use lambda.floor() is very important.
+
         let n: usize = sp.itvl.nx();
         let dx2: f32 = sp.itvl.dx().powi(2);
         for ix in 0..n {
-            let x: f32 = sp.itvl_x(ix);
+            let x: f32 = sp.itvl.x(ix);
             let delta1 = x;
             for iy in 0..n {
-                let y: f32 = sp.itvl_x(iy);
-                let delta2 = if delta1 == 0. && y == 0. {
+                let y: f32 = sp.itvl.x(iy);
+                let delta2 = if x == 0. && y == 0. {
                     (dx2 * 2.).sqrt()
                 } else {
                     // (x.powi(2) + y.powi(2)).sqrt()
@@ -92,13 +87,13 @@ pub fn _unsmoothed_sensitivity_kernels(
                 // let iangle = angle as i32;
 
                 phsens[[ix, iy]] += (-2. * iamp * kk.powi(2))
-                    * (kk * (delta1 + delta2) / radius + pi / 4.).sin()
-                    / (8. * pi * kk * ((delta2 / radius).sin()).abs()).sqrt()
+                    * (kk * (delta1 + delta2) / radius + frac_pi_4).sin()
+                    / (8. * pi * kk * (delta2 / radius).sin().abs()).sqrt()
                     * (dx2 / radius.powi(2));
 
                 ampsens[[ix, iy]] += (-2. * iamp * kk.powi(2))
-                    * (kk * (delta1 + delta2) / radius + pi / 4.).cos()
-                    / (8. * pi * kk * ((delta2 / radius).sin()).abs()).sqrt()
+                    * (kk * (delta1 + delta2) / radius + frac_pi_4).cos()
+                    / (8. * pi * kk * (delta2 / radius).sin().abs()).sqrt()
                     * (dx2 / radius.powi(2));
             }
         }

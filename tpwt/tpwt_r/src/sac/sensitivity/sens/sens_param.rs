@@ -2,29 +2,23 @@ pub struct SensParam {
     pub phvel: f32,
     pub smooth: i64,
     pub itvl: Interval,
-    imax: usize,
 }
 
 impl SensParam {
     pub fn new(phvel: f32, smooth: i64) -> Self {
         // default
-        let imax = 400;
         let itvl = Interval::new(-1500., 1500., 10.);
-
         SensParam {
             phvel,
             smooth,
             itvl,
-            imax,
         }
     }
 
-    pub fn itvl_x(&self, x: usize) -> f32 {
-        self.itvl.x(x)
-    }
-
     pub fn sens_dimension(&self) -> (usize, usize) {
-        (self.imax, self.imax)
+        // (self.imax, self.imax)
+        let n = self.itvl.nx();
+        (n, n)
     }
 }
 
@@ -46,7 +40,7 @@ impl Interval {
     }
 
     pub fn nx(&self) -> usize {
-        (((self.end - self.begin) / self.delta) as i64 + 1) as usize
+        ((self.end - self.begin) / self.delta) as usize + 1
     }
 
     pub fn x(&self, id: usize) -> f32 {
