@@ -2,6 +2,7 @@ import os, subprocess
 import shutil
 
 from tpwt_p.rose import get_binuse, remove_targets
+import tpwt_r
 
 
 def sensitivity_TPWT(per, vel, smooth, wave_type="rayleigh", *, out_dir=None, bin_from='./'):
@@ -10,19 +11,20 @@ def sensitivity_TPWT(per, vel, smooth, wave_type="rayleigh", *, out_dir=None, bi
     """
     # create sac
     sac_file = f'{per}.sac'
-    createsac_TPWT = get_binuse('createsac_TPWT', bin_from)
+    tpwt_r.sac_sens_new_period(sac_file, per)
+    # createsac_TPWT = get_binuse('createsac_TPWT', bin_from)
 
-    cmd_list = [
-        f'{createsac_TPWT} <<!',
-        f'{per}',
-        f'{sac_file}',
-        '!',
-    ]
-    cmd_string = '\n'.join(cmd_list)
-    subprocess.Popen(
-        ['bash'],
-        stdin = subprocess.PIPE
-    ).communicate(cmd_string.encode())
+    # cmd_list = [
+    #     f'{createsac_TPWT} <<!',
+    #     f'{per}',
+    #     f'{sac_file}',
+    #     '!',
+    # ]
+    # cmd_string = '\n'.join(cmd_list)
+    # subprocess.Popen(
+    #     ['bash'],
+    #     stdin = subprocess.PIPE
+    # ).communicate(cmd_string.encode())
 
     # sac
     sac_cut = f'{per}.cut800t1000'
@@ -47,40 +49,41 @@ def sensitivity_TPWT(per, vel, smooth, wave_type="rayleigh", *, out_dir=None, bi
 
     # getdatafromsac_GZ
     input = f'{sac_cut}.am'
-    output = input + '.dat'
-    getdatafromsac = get_binuse('getdatafromsac_GZ', bin_from)
+    # output = input + '.dat'
+    # getdatafromsac = get_binuse('getdatafromsac_GZ', bin_from)
 
-    cmd_list = [
-        f'{getdatafromsac} <<!',
-        f'{input}',
-        f'{output}',
-        '!',
-    ]
-    cmd_string = '\n'.join(cmd_list)
-    subprocess.Popen(
-        ['bash'],
-        stdin = subprocess.PIPE
-    ).communicate(cmd_string.encode())
+    # cmd_list = [
+    #     f'{getdatafromsac} <<!',
+    #     f'{input}',
+    #     f'{output}',
+    #     '!',
+    # ]
+    # cmd_string = '\n'.join(cmd_list)
+    # subprocess.Popen(
+    #     ['bash'],
+    #     stdin = subprocess.PIPE
+    # ).communicate(cmd_string.encode())
 
-    # sensitivity_wavetype
-    sen_input = output
+    # # sensitivity_wavetype
+    # sen_input = output
     sen_output = f'sens{per}s{smooth}km.dat'
-    sensitivity = get_binuse(f'sensitivity_{wave_type}', bin_from)
+    tpwt_r.sac_sens(input, sen_output)
+    # sensitivity = get_binuse(f'sensitivity_{wave_type}', bin_from)
 
-    cmd_list = [
-        f'{sensitivity} <<!',
-        f'{vel}',
-        f'{sen_input}',
-        f'{sen_output}',
-        f'{smooth}',
-        '!',
-        f'rm {per}.*',
-    ]
-    cmd_string = '\n'.join(cmd_list)
-    subprocess.Popen(
-        ['bash'],
-        stdin = subprocess.PIPE
-    ).communicate(cmd_string.encode())
+    # cmd_list = [
+    #     f'{sensitivity} <<!',
+    #     f'{vel}',
+    #     f'{sen_input}',
+    #     f'{sen_output}',
+    #     f'{smooth}',
+    #     '!',
+    #     f'rm {per}.*',
+    # ]
+    # cmd_string = '\n'.join(cmd_list)
+    # subprocess.Popen(
+    #     ['bash'],
+    #     stdin = subprocess.PIPE
+    # ).communicate(cmd_string.encode())
 
     if out_dir:
         # check if des_dir exists
