@@ -1,5 +1,4 @@
-from collections import namedtuple
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from icecream import ic
 import subprocess
@@ -8,15 +7,13 @@ import os
 from tpwt_p.rose import glob_patterns, get_binuse
 
 
-Param_as = namedtuple("Param_as", "event dir_ref work spectral_snr_TPWT aftani_c_pgl_TPWT")
-
-
-def process_events_aftan_snr(sac_dir: Path, path: str, work: Path):
+def process_events_aftan_snr(sac_dir: str, path: str):
     """
     aftan and SNR in sac/event/
     and
     output is target/path/
     """
+    work = Path(".").cwd()
     dir_ref = work / path
     # filelist = 'filelist'
 
@@ -24,29 +21,28 @@ def process_events_aftan_snr(sac_dir: Path, path: str, work: Path):
     spectral_snr_TPWT = get_binuse('spectral_snr_TPWT', bin_from=work)
 
 
-    events = glob_patterns("glob", sac_dir, ['20*/'])
+    events = glob_patterns("glob", Path(sac_dir), ['20*/'])
     # aftani_c_pgl_TPWT
     aftani_c_pgl_TPWT = get_binuse('aftani_c_pgl_TPWT', bin_from=work)
 
-    ps = [Param_as(e, dir_ref, work, spectral_snr_TPWT, aftani_c_pgl_TPWT) for e in events]
-
-    pool = Pool(3)
-    pool.map(process_event_aftan_and_SNR, ps)
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        for e in events:
+            executor.submit(process_event_aftan_and_SNR, e, dir_ref, work, spectral_snr_TPWT, aftani_c_pgl_TPWT)
 
 
 ###############################################################################
 
 
-def process_event_aftan_and_SNR(p):
+def process_event_aftan_and_SNR(event, dir_ref, work, spectral_snr_TPWT, aftani_c_pgl_TPWT):
     """
     batch function for process_events_flag_aftan_and_SNR
     """
-    sacs = glob_patterns("glob", p.event, ['*.sac'])
+    sacs = glob_patterns("glob", event, ['*.sac'])
 
     filelist='filelist'
 
     # go into sac data directory
-    os.chdir(str(p.event))
+    os.chdir(str(event))
 
     with open(filelist, 'w+') as f:
         for sac in sacs:
@@ -54,17 +50,17 @@ def process_event_aftan_and_SNR(p):
             # filelist
             f.write(sf + '\n')
             # aftan
-            aftani_c_pgl_TPWT_run(p.dir_ref, sf, p.aftani_c_pgl_TPWT)
+            aftani_c_pgl_TPWT_run(dir_ref, sf, aftani_c_pgl_TPWT)
 
-    cmd_string = f'{p.spectral_snr_TPWT} {filelist} > temp.dat \n'
+    cmd_string = f'{spectral_snr_TPWT} {filelist} > temp.dat \n'
     cmd_string += 'rm temp.dat'
     subprocess.Popen(
         ['bash'],
         stdin = subprocess.PIPE
     ).communicate(cmd_string.encode())
 
-    ic(p.event.name, "done.")
-    os.chdir(str(p.work))
+    ic(event.name, "done.")
+    os.chdir(str(work))
 
 
 def aftani_c_pgl_TPWT_run(dir_ref: Path, sac_file: str, aftani_c_pgl_TPWT):

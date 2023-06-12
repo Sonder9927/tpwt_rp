@@ -15,17 +15,19 @@ Param_tpwt = namedtuple("Param_twpt", "per vel snr tcut dist nsta smooth damping
     "eqlistper nodes staid all_events sens_dir tpwt_dir")
 
 class TPWT_Iter:
-    def __init__(self, param, snr, tcut, smooth, damping) -> None:
+    def __init__(self, param) -> None:
         self.param = param
-        self.snr= snr
-        self.tcut = tcut
-        self.smooth = smooth
-        self.damping = damping
+        self.region = None
+
+    def iter(self):
+        self.initialize()
+        self.inverse()
 
     def initialize(self, periods=[], area_expand=.5):
         # create inversion grid nodes
         self.node_file = "target/inversion_nodes"
-        region = Region(self.param.model["region"])
+        region = self.param.region()
+        
         # notice: `expanded` will return a list `[w,e,s,n]` but not change `Region`
         self.region = region.expanded(area_expand)
         region.expand(area_expand)
@@ -52,31 +54,32 @@ class TPWT_Iter:
         staid.to_csv(self.staid, sep=' ', header=False, index=False)
 
         # some dirs
-        self.all_events = check_exists("target/all_events")
-        ## these need to re-create to generate new results
+        # self.all_events = check_exists(self.param.target("all_events"))
+        # ## these need to re-create to generate new results
         self.tpwt_dir = re_create_dir(
             get_dirname("TPWT", snr=self.snr, tcut=self.tcut, smooth=self.smooth, damping=self.damping))
         self.sens_dir = re_create_dir("target/sens_dir")
 
         # preparation for inversion with periods
-        self.pers = self.param.model["periods"]
-        self.vels = self.param.model["vels"]
-        self.ds = dicts_of_per_vel(pers=self.pers, vels=self.vels)
+        # self.pers = self.param.model["periods"]
+        # self.vels = self.param.model["vels"]
+        # self.ds = dicts_of_per_vel(pers=self.pers, vels=self.vels)
         ## special cases
-        if periods:
-            self.pers = periods
-            ds = [d for d in self.ds if d['per'] in self.pers]
-        else:
-            ds = self.ds
+        # if periods:
+        #     self.pers = periods
+        #     ds = [d for d in self.ds if d['per'] in self.pers]
+        # else:
+        #     ds = self.ds
 
         # bind parameters
-        self.ps = [Param_tpwt(
-            d["per"], d["vel"], self.snr, self.tcut, self.param.filter["dist"],
-            self.param.filter["nsta"], self.smooth, self.damping, self.region,
-            self.eqlistper, self.node_file, self.staid, self.all_events, self.tpwt_dir,
-            self.sens_dir) for d in ds]
+        # self.ps = [Param_tpwt(
+        #     d["per"], d["vel"], self.snr, self.tcut, self.param.filter["dist"],
+        #     self.param.filter["nsta"], self.smooth, self.damping, self.region,
+        #     self.eqlistper, self.node_file, self.staid, self.all_events, self.tpwt_dir,
+        #     self.sens_dir) for d in ds]
 
-        inverse_pre(self.ps)
+        # inverse_pre(self.ps)
+        inverse_pre(self.param, self.eqlistper, self.node_file, self.staid, self.tpwt_dir)
 
     def inverse(self, periods=[], method="rswt"):
         # run tpwt with special periods or periods initialized(default)

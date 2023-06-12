@@ -1,6 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
-from collections import namedtuple
-from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pathlib import Path
 import subprocess, shutil
 
@@ -8,52 +6,34 @@ from tpwt_p.rose import glob_patterns, get_binuse, get_dirname, re_create_dir
 from tpwt_p.gmt import gmt_amp, gmt_phase_time
 
 
-Param_dist = namedtuple("Param_dist",
-    "bp_dist bp_v1 period sta_dist find_phvel_amp_eq correct_tt_select_data")
-Param_phase_amp = namedtuple("Param_phase_amp", "event region")
-
-
-def process_periods_sta_dist(bp, periods: list):
+def process_periods_sta_dist(param):
     # re-create directory 'all_events'
-    all_events = Path("target/all_events")
+    all_events = Path(param.target("all_events"))
     re_create_dir(all_events)
 
-    sta_dist = r"target/sta_dist.lst"
     # calc_distance to create sta_dist.lst
-    calculate_sta_dist(bp.evt, bp.sta, bp.sac, sta_dist)
-
-    # some parameters
-    bp_dist = {
-        "snr": bp.snr,
-        "dist": bp.dist,
-        "sac": bp.sac,
-        "all_events": all_events,
-    }
-    bp_v1 = {
-        "ref_lo": bp.ref_sta.lo,
-        "ref_la": bp.ref_sta.la,
-        "tcut": bp.tcut,
-        "nsta": bp.nsta,
-        "stacut": bp.stacut,
-    }
+    evt = param.target("evt_lst")
+    sta = param.target("sta_lst")
+    sac = param.target("sac")
+    sta_dist = r"target/sta_dist.lst"
+    calculate_sta_dist(evt, sta, sac, sta_dist)
 
     find_phvel_amp_eq = get_binuse('find_phvel_amp_earthquake')
     correct_tt_select_data = get_binuse('correct_tt_select_data')
 
-    # get all_events/sec_dir/evt.ph.txt(_v1)
-    ps = [Param_dist(bp_dist, bp_v1, per, sta_dist,
-        find_phvel_amp_eq, correct_tt_select_data) for per in periods]
+    periods = param.periods()
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        for p in periods:
+            executor.submit(process_period_sta_dist, param, p, sta_dist, find_phvel_amp_eq, correct_tt_select_data)
 
-    pool1 = Pool(3)
-    pool1.map(process_period_sta_dist, ps)
     Path(sta_dist).unlink()
 
     # plot phase time and amp of all events
     events = glob_patterns("glob", all_events, ["**/*ph.txt"])
-    region = bp.region.original()
-    ps = [Param_phase_amp(e, region) for e in events]
-    pool2 = Pool(3)
-    pool2.map(event_phase_time_and_amp, ps)
+    region = param.region().original()
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        for e in events:
+            executor.submit(event_phase_time_and_amp, e, region)
 
 
 ###############################################################################
@@ -82,62 +62,66 @@ batch function
 
 
 # process every period
-def process_period_sta_dist(p: Param_dist):
+def process_period_sta_dist(p, period, sta_dist, find_phvel_amp_eq, correct_tt_select_data):
     """
     batch function for process_periods_sta_dist
     """
     # bind period to bp
-    calc_distance_find_eq(p.bp_dist, p.period,  p.sta_dist, p.find_phvel_amp_eq)
+    calc_distance_find_eq(p, period,  sta_dist, find_phvel_amp_eq)
 
-    sec = Path(p.bp_dist["all_events"] / get_dirname("sec",
-        period=p.period, snr=p.bp_dist["snr"], dist=p.bp_dist["dist"]))
+    sec = Path(p.parameter("all_events") / get_dirname("sec",
+        period=period, snr=p.parameter("snr"), dist=p.parameter("dist")))
 
-    all_periods_sec(p.bp_v1, sec, p.period, p.correct_tt_select_data)
+    all_periods_sec(p, sec, period, correct_tt_select_data)
 
         
 ###############################################################################
 
 
-def calc_distance_find_eq(bp, period, sta_dist, find_phvel_amp_eq):
+def calc_distance_find_eq(p, period, sta_dist, find_phvel_amp_eq):
+    snr = p.parameter("snr")
+    dist = p.parameter("dist")
+    sac = p.parameter("sac")
     cmd_string = 'echo shell start\n'
     cmd_string += f'{find_phvel_amp_eq} '
-    cmd_string += f'{period} {sta_dist} {bp["snr"]} {bp["dist"]} {bp["sac"]}/\n'
+    cmd_string += f'{period} {sta_dist} {snr} {dist} {sac}/\n'
     cmd_string += 'echo shell end'
     subprocess.Popen(
         ['bash'],
         stdin = subprocess.PIPE
     ).communicate(cmd_string.encode())
-    shutil.move(get_dirname("sec", period=period, snr=bp["snr"], dist=bp["dist"]), bp["all_events"])
+
+    all_events = p.target("all_events")
+    shutil.move(get_dirname("sec", period=period, snr=snr, dist=dist), all_events)
 
 
-def all_periods_sec(bp, sec, period, correct_tt_select_data):
+def all_periods_sec(param, sec, period, correct_tt_select_data):
     # ["*ph.txt", "*_v1"]
     events = glob_patterns("glob", sec, ["*ph.txt"])
-    Param_v1 = namedtuple("Param_v1",
-        "nsta stacut ref_lo ref_la tcut period event correct_tt_select_data")
-
-    ps = [Param_v1(
-        bp["nsta"], bp["stacut"], bp["ref_lo"], bp["ref_la"], bp["tcut"], 
-        period, e, correct_tt_select_data) for e in events]
-    with ThreadPoolExecutor(max_workers=10) as pt:
-        pt.map(ph_txt_v1, ps)
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        for e in events:
+            executor.submit(ph_txt_v1, param, period, e, correct_tt_select_data)
 
 
 # process every event
 # cannot use Thread
-def ph_txt_v1(p):
+def ph_txt_v1(p, period, event, correct_tt_select_data):
     """
     batch function
     plot phase time
     plot amp
     """
-    stanum = len(open(p.event, 'r').readlines())
+    stanum = len(open(event, 'r').readlines())
+    nsta = p.parameter("nsta")
+    stacut = p.parameter("stacut_per")
+    [ref_lo, ref_la] = p.ref_sta()
+    tcut = p.parameter("tcut")
 
-    if stanum >= p.nsta:
+    if stanum >= nsta:
         cmd_string = 'echo shell start\n'
-        cmd_string += f'{p.correct_tt_select_data} '
-        cmd_string += f'{p.event} {p.period} {p.nsta} {p.stacut} '
-        cmd_string += f'{p.ref_lo} {p.ref_la} {p.tcut}\n'
+        cmd_string += f'{correct_tt_select_data} '
+        cmd_string += f'{event} {period} {nsta} {stacut} '
+        cmd_string += f'{ref_lo} {ref_la} {tcut}\n'
         cmd_string += 'echo shell end'
         subprocess.Popen(
             ['bash'],
@@ -148,11 +132,11 @@ def ph_txt_v1(p):
 ###############################################################################
 
 
-def event_phase_time_and_amp(p: Param_phase_amp):
+def event_phase_time_and_amp(event, region):
     """
     plot phase time and amp of all events with region
     """
-    if p.event.stat().st_size != 0:
-        gmt_phase_time(p.event, p.region)
-        gmt_amp(p.event, p.region)
+    if event.stat().st_size != 0:
+        gmt_phase_time(event, region)
+        gmt_amp(event, region)
 

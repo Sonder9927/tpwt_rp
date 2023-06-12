@@ -10,10 +10,11 @@ from .tpwt_fns import(
 )
 
 
-def inverse_pre(params):
+def inverse_pre(param, eqlistper, node_file, staid, tpwt_dir):
     # multiprocessing
-    with ProcessPoolExecutor(max_workers=10) as executor:
-        executor.map(batch_period_phampcor, params)
+    with ProcessPoolExecutor(max_workers=5) as executor:
+        for [p, v] in param.pv_pairs():
+            executor.submit(batch_period_phampcor, param, p, v, eqlistper, node_file, staid, tpwt_dir)
 
 ###############################################################################
 def inverse_run(params, method="rswt"):
@@ -46,19 +47,27 @@ def rswt_run(params):
 batch function
 """
 
-def batch_period_phampcor(p):
+def batch_period_phampcor(p, per, vel, eqlistper, nodes, staid, tpwt_dir):
     # sensitivity (this is rayleigh edition)
-    sensitivity_TPWT(p.per, p.vel, p.smooth, "rayleigh", out_dir=p.sens_dir)
+    smooth = p.parameter("smooth")
+    damping = p.parameter("damping")
+    sens_dir = p.target("sens_dir")
+    all_events = p.target("all_events")
+    snr = p.parameter("snr")
+    nsta = p.parameter("nsta")
+    dist = p.parameter("dist")
+
+    sensitivity_TPWT(per, vel, smooth, "rayleigh", out_dir=sens_dir)
 
     # flag phamp
-    sens_dat = Path.cwd() / p.sens_dir / f"sens{p.per}s{p.smooth}km.dat"
-    sec_snr_dis = Path(p.all_events) / f"{p.per}sec_{p.snr}snr_{p.dist}dis"
-    rdsetupsimul_phamp_from_earthquake_TPWT(p.per, p.vel, p.snr,
-        p.dist, p.nsta, p.smooth, p.damping,
-        str(p.eqlistper), str(sens_dat), str(sec_snr_dis))
+    sens_dat = Path.cwd() / sens_dir / f"sens{per}s{smooth}km.dat"
+    sec_snr_dis = Path(all_events) / f"{per}sec_{snr}snr_{dist}dis"
+    rdsetupsimul_phamp_from_earthquake_TPWT(per, vel, snr,
+        dist, nsta, smooth, damping,
+        eqlistper, str(sens_dat), str(sec_snr_dis))
 
     # sort files and get stationid.dat
-    sort_files_for_iter(p.per, p.nodes, p.staid, sens_dat, p.tpwt_dir)
+    sort_files_for_iter(per, nodes, staid, sens_dat, tpwt_dir)
 
 def batch_period_grid(p):
     # RSWT

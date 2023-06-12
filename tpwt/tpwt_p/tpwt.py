@@ -43,14 +43,11 @@ def tpwt_check(data: str):
 
 def quanlity_control(param):
     # data = tpwt_flow.Data_Filter(bp, param.model["periods"])
-    data = tpwt_flow.Data_Filter(param, [20, 25])
-    # data.path = param.targets["path"]
-    # data.aftan_snr(param.targets["path"])
-    snr = param.parameter("snr")
-    tcut = param.parameter("tcut")
-    data.sta_dist(snr, tcut)
-    # eq = data.eqlistper()
-    return "eq"
+    data = tpwt_flow.Data_Filter(param)
+    data.filter()
+def tpwt_iter(param):
+    iter = tpwt_flow.TPWT_Iter(param)
+    iter.iter()
 
 def main(param_json: str):
     # start
@@ -72,31 +69,8 @@ def main(param_json: str):
     tpwt_check(param.target("sac"))
 
     # mass control
-    eq = quanlity_control(param)
-    ic(eq)
-        # state.change_state("control", False)
+    quanlity_control(param)
 
-    # # iterater
-    # tpwt = tpwt_flow.TPWT_Iter(region, smooth, damping)
-    # # tpwt.step_4()
-    # # tpwt.step_5()
-    # tpwt.create_nodes()
-    # tpwt.sens()
-    # # tpwt.kern100()
-    # tpwt.kern300()
-    # tpwt.find_bad()
-    # # tpwt.kern160()
-    # tpwt.kern360()
-
-    # state.save()
-
-    # # # checkboard
-    # # cb = tpwt_flow.Check_Board()
-    # # cb.check_board()
-
-    # # per_info = period_info("target/TPWT_15snr_8tcut_65smooth_0.2damping", 26)
-
-    # state.save()
 
 
 if __name__ == "__main__":
