@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 pub struct SensParam {
     pub phvel: f32,
     pub smooth: i64,
@@ -19,6 +21,19 @@ impl SensParam {
         // (self.imax, self.imax)
         let n = self.itvl.nx();
         (n, n)
+    }
+    pub fn sens_loop(&self) -> Vec<[usize; 2]> {
+        let n = self.itvl.nx();
+        (0..n)
+            .into_par_iter()
+            .map(|x| {
+                (0..n)
+                    .into_par_iter()
+                    .map(|y| [x, y])
+                    .collect::<Vec<[usize; 2]>>()
+            })
+            .flatten()
+            .collect::<Vec<[usize; 2]>>()
     }
 }
 

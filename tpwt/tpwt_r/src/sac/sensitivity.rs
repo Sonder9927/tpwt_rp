@@ -36,23 +36,29 @@ pub fn sac_sens(sac_file: &str, phvel: f32, smooth: i64, sens_file: &str) -> PyR
     // write to file
     let mut f = File::create(sens_file)?;
 
+    // head
     let n = sp.itvl.nx();
-    let nn = n as i32;
     let beg = sp.itvl.x(0);
     let delta = sp.itvl.dx();
-    let content = f!(" {nn} {beg} {delta} \n");
+    let content = f!(" {n} {beg} {delta} \n");
     f.write(content.as_bytes())?;
     f.write(content.as_bytes())?;
 
-    for ix in 0..n {
-        let x = sp.itvl.x(ix);
-        for iy in 0..n {
+    // smoothed sens
+    let avgsens = sp
+        .sens_loop()
+        .into_par_iter()
+        .map(|[ix, iy]| {
+            let x = sp.itvl.x(ix);
             let y = sp.itvl.x(iy);
-            let phv = avgphsens[[ix, iy]];
-            let ampv = avgampsens[[ix, iy]];
-            let content = f!(" {x} {y} {phv:.7e} {ampv:.7e}\n");
-            f.write(content.as_bytes())?;
-        }
+            let avgph_val = avgphsens[[ix, iy]];
+            let avgamp_val = avgampsens[[ix, iy]];
+            f!(" {x} {y} {avgph_val:.7e} {avgamp_val:.7e}\n")
+        })
+        .collect::<Vec<String>>();
+
+    for s in avgsens {
+        f.write(s.as_bytes())?;
     }
 
     Ok(())
