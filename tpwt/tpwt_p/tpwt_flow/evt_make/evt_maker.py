@@ -5,8 +5,12 @@ import pandas as pd
 
 class Evt_Make:
     def __init__(self, evt1, evt2):
-        self.evt1 = pd.read_csv(evt1, usecols=["time", "latitude", "longitude", "depth"])
-        self.evt2 = pd.read_csv(evt2, usecols=["time", "latitude", "longitude", "depth"])
+        self.evt1 = pd.read_csv(
+            evt1, usecols=["time", "latitude", "longitude", "depth"]
+        )
+        self.evt2 = pd.read_csv(
+            evt2, usecols=["time", "latitude", "longitude", "depth"]
+        )
         self.state = "NONE"
         ic("Hello, this is EVT maker.")
 
@@ -27,10 +31,10 @@ class Evt_Make:
         temp = sorted(evt.index)
 
         drop_lst = set()
-        for i in range(len(temp)-1):
-            du = (temp[i+1] - temp[i]).total_seconds()
+        for i in range(len(temp) - 1):
+            du = (temp[i + 1] - temp[i]).total_seconds()
             if du < time_delta:
-                drop_lst.update(temp[i: i+2])
+                drop_lst.update(temp[i : i + 2])
 
         self.evt = evt.drop(drop_lst)
 
@@ -41,12 +45,14 @@ class Evt_Make:
 
     def evt_lst(self, lst, pattern, form):
         evt = self.evt
-        evt["time"] = evt["time"].apply(lambda x: time_convert(str(x)[:19], pattern, form))
-        evt[["longitude","latitude"]] = self.evt[["latitude","longitude"]]
+        evt["time"] = evt["time"].apply(
+            lambda x: time_convert(str(x)[:19], pattern, form)
+        )
+        evt[["longitude", "latitude"]] = self.evt[["latitude", "longitude"]]
         evt.to_csv(lst, sep=" ", header=False, index=False)
         ic("Sucessfully get", lst)
 
 
-def time_convert(val: str, pattern:str, form: str) -> str:
+def time_convert(val: str, pattern: str, form: str) -> str:
     time = dt.datetime.strptime(val, pattern)
     return dt.datetime.strftime(time, form)

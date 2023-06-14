@@ -3,6 +3,7 @@ from icecream import ic
 # from .tpwt_p import tpwt_flow
 from . import tpwt_flow
 from .check import Check_In
+
 # from tpwt_p.info_per import period_info
 import tpwt_r
 
@@ -22,15 +23,20 @@ def evts_from_30_to_120(param):
 
 
 def evt_cut(param):
-    data = tpwt_flow.Evt_Cut(param.target("og_data"))  # if set z_pattern to '1' the new file will be `file_1`
-    data.cut_event(param.target("cut_dir"), param.target("evt_cat"), param.parameter("time_delta"))  # if cut_from: use cut_from else: use self.only_Z_1Hz
+    data = tpwt_flow.Evt_Cut(
+        param.target("og_data")
+    )  # if set z_pattern to '1' the new file will be `file_1`
+    data.cut_event(
+        param.target("cut_dir"), param.target("evt_cat"), param.parameter("time_delta")
+    )  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
 def sac_format(param):
     sac = tpwt_flow.Sac_Format(
-            param.target("cut_dir"), 
-            evt=param.target("evt_all_lst"), 
-            sta=param.target("sta_lst"))
+        param.target("cut_dir"),
+        evt=param.target("evt_all_lst"),
+        sta=param.target("sta_lst"),
+    )
     sac.make_sac(param.target("sac"))
     sac.filter_event_lst(param.target("sac"), param.target("evt_lst"))
 
@@ -45,9 +51,12 @@ def quanlity_control(param):
     # data = tpwt_flow.Data_Filter(bp, param.model["periods"])
     data = tpwt_flow.Data_Filter(param)
     data.filter()
+
+
 def tpwt_iter(param):
     iter = tpwt_flow.TPWT_Iter(param)
     iter.iter()
+
 
 def main(param_json: str):
     # start
@@ -70,7 +79,6 @@ def main(param_json: str):
 
     # mass control
     quanlity_control(param)
-
 
 
 if __name__ == "__main__":

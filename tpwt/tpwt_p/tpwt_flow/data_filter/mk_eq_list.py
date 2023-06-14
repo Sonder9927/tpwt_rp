@@ -14,7 +14,7 @@ def mk_eqlistper(sac_dir: Path, evts, stas, region, nsta) -> Path:
     # process every event
     # find valid events
     temppers = process_events_tempper(sac_dir, events, stations, nsta)
-    
+
     # write eqlistper
     eqlistper = write_events_eqlistper(sac_dir, temppers)
 
@@ -35,18 +35,17 @@ def process_events_tempper(sac_dir: Path, events, stas, nsta) -> dict:
 
 
 def write_events_eqlistper(sac_dir: Path, temppers: dict):
-    eqlistper = Path('target/eqlistper')
+    eqlistper = Path("target/eqlistper")
 
-    f = open(eqlistper, 'w+')
+    f = open(eqlistper, "w+")
     # first line
-    f.write(f'{len(temppers)}\n')
+    f.write(f"{len(temppers)}\n")
 
     evt_list = sorted([*temppers])
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         for i, e in enumerate(evt_list):
-            future = executor.submit(
-                write_event_eqlistper, temppers, sac_dir, e, i+1)
+            future = executor.submit(write_event_eqlistper, temppers, sac_dir, e, i + 1)
             f.write(future.result())
 
     f.close()
@@ -63,12 +62,12 @@ def process_event_tempper(data: Path, evt, stas, nsta) -> dict:
     """
     batch function
     """
-    filelist = check_exists(data / evt / 'filelist')
+    filelist = check_exists(data / evt / "filelist")
 
-    with open(filelist, 'r') as f:
+    with open(filelist, "r") as f:
         sacs = f.read().splitlines()
 
-    tempper = [sac for sta in stas if (sac := f'{evt}.{sta}.LHZ.sac') in sacs]
+    tempper = [sac for sta in stas if (sac := f"{evt}.{sta}.LHZ.sac") in sacs]
 
     if len(tempper) <= nsta:
         ic(evt, "not enough stations")
@@ -86,12 +85,12 @@ def write_event_eqlistper(temppers: dict, sac_dir: Path, evt, evt_id: int):
     total number of sac files exists, evt_num
     """
     tems_evt = temppers[evt]
-    content = f'    {len(tems_evt)} {evt_id}\n'
+    content = f"    {len(tems_evt)} {evt_id}\n"
 
     # sac files' position will follow it
     evt_dir = sac_dir / evt
     for sac in tems_evt:
-        content += f'{evt_dir/sac}\n'
+        content += f"{evt_dir/sac}\n"
 
     return content
 
@@ -105,8 +104,8 @@ def find_events(evts: pd.DataFrame, sac_dir: Path) -> list:
     that are in both file_name and dir_name.
     """
     evts_dir = pd.DataFrame(
-        data = [e.name for e in glob_patterns("glob", sac_dir, ["20*/"])],
-        columns = ["sta"])
+        data=[e.name for e in glob_patterns("glob", sac_dir, ["20*/"])], columns=["sta"]
+    )
 
     events_df = pd.concat([evts, evts_dir]).drop_duplicates(keep=False)
     return events_df.sta.dropna().unique()
@@ -124,4 +123,4 @@ def find_stations(stas, area):
         & (stas.lo <= area.east)
     ]
 
-    return [i for i in sta_in_area['sta']]
+    return [i for i in sta_in_area["sta"]]

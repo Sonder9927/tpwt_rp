@@ -1,5 +1,6 @@
 import obspy
 
+
 class Obs:
     def __init__(self, target, evt, sta, channel: str) -> None:
         self.evt = evt

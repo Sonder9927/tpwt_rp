@@ -9,7 +9,6 @@ use pyo3::prelude::*;
 
 use geo_fns::{convex_hull_from_file, points_from_file_in_hull};
 
-
 #[pyfunction]
 pub fn convex_hull(f: &str) -> PyResult<Vec<[f64; 2]>> {
     let hull = convex_hull_from_file(f).unwrap();

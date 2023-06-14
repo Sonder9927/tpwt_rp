@@ -7,13 +7,14 @@ from .aftan_snr import process_events_aftan_snr
 from .sta_dist import process_periods_sta_dist
 from .mk_eq_list import mk_eqlistper
 
+
 class Data_Filter:
     def __init__(self, param) -> None:
         self.param = param
         ef = self.param.target("evt_lst")
         sf = self.param.target("sta_lst")
-        self.evts = read_xyz(ef, ['sta', 'lo', 'la'])
-        self.stas = read_xyz(sf, ['sta', 'lo', 'la'])
+        self.evts = read_xyz(ef, ["sta", "lo", "la"])
+        self.stas = read_xyz(sf, ["sta", "lo", "la"])
 
     def filter(self):
         self.calculate_dispersion()
@@ -45,16 +46,15 @@ class Data_Filter:
 
     def mk_eqlistper(self):
         self.eq_list = mk_eqlistper(
-            sac_dir = self.param.parameter("sac"),
-            evts = self.evts["sta"],
-            stas = self.stas,
-            region = self.param.region(),
-            nsta = self.param.parameter("nsta")
-            )
+            sac_dir=self.param.parameter("sac"),
+            evts=self.evts["sta"],
+            stas=self.stas,
+            region=self.param.region(),
+            nsta=self.param.parameter("nsta"),
+        )
         return self.eq_list
 
-        
 
 def sta_v2(sta):
-    sta[['lo', 'la']] = sta[['la', 'lo']]
+    sta[["lo", "la"]] = sta[["la", "lo"]]
     return sta

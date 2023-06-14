@@ -3,7 +3,7 @@
 # created: 6th April 2022
 # version: 1.3
 
-'''
+"""
 This script will move events directories having 14 numbers in cut_dir to sac_dir
 and batch rename a group of sac files in given directory renamed with 12 numbers.
 
@@ -13,7 +13,7 @@ To
 event.station.LHZ.sac
 
 Then add information of both event and station to head of sac files in SAC directory
-'''
+"""
 
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pathlib import Path
@@ -33,16 +33,26 @@ class Pos:
         self.y = y
         self.z = z
 
+
 class Sac_Format:
     def __init__(self, data, *, evt, sta) -> None:
         self.data = Path(data)
         self.channel = "LHZ"
-        self.evt = pd.read_csv(evt,
-            delim_whitespace=True, names=["evt", "lo", "la", "dp"], dtype={"evt": str},
-            header=None, index_col="evt")
-        self.sta = pd.read_csv(sta,
-            delim_whitespace=True, names=["sta", "lo", "la"],
-            header=None, index_col="sta")
+        self.evt = pd.read_csv(
+            evt,
+            delim_whitespace=True,
+            names=["evt", "lo", "la", "dp"],
+            dtype={"evt": str},
+            header=None,
+            index_col="evt",
+        )
+        self.sta = pd.read_csv(
+            sta,
+            delim_whitespace=True,
+            names=["sta", "lo", "la"],
+            header=None,
+            index_col="sta",
+        )
         ic(f"Hello, this is SAC formatter")
 
     def make_sac(self, dir: str):
@@ -123,7 +133,7 @@ def batch_dist(sacs: list[Path]):
     for sp in sacs:
         sac = Ses(str(sp))
         dist = sac.dist_km
-        if dist<rad30 or dist>rad120:
+        if dist < rad30 or dist > rad120:
             sp.unlink()
 
 
@@ -144,14 +154,14 @@ def rename_ch(sac, ep, stas, channel):
         ch_sac(sac_new, ep, sp, sta_name, channel)
         # ch_obspy(res.sac, p.evt, p.stas[res.sta], p.channel)
         return None
-        
+
 
 def format_sac_name(target: Path, channel):
     """
     rename and ch sac files
     """
     evt_name = target.parent.name
-    sta_name = target.name.split('.')[1].upper()
+    sta_name = target.name.split(".")[1].upper()
     new_name = f"{evt_name}.{sta_name}.{channel}.sac"
 
     target_new = target.parent / new_name
@@ -179,7 +189,7 @@ def ch_sac(target: Path, evt: Pos, sta: Pos, sta_name, channel):
     s += "q \n"
 
     os.putenv("SAC_DISPLAY_COPYRIGHT", "0")
-    subprocess.Popen(['sac'], stdin=subprocess.PIPE).communicate(s.encode())
+    subprocess.Popen(["sac"], stdin=subprocess.PIPE).communicate(s.encode())
 
 
 def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
@@ -189,4 +199,3 @@ def ch_obspy(target: Path, evt: Pos, sta: Pos, channel):
     # ch evla, evlo, evdp(optional) and stla, stlo, stel(optional)
     obs = Obs(target, evt, sta, channel)
     obs.ch_obs()
-

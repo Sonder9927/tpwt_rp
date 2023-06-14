@@ -4,15 +4,17 @@ import shutil
 
 
 # get bin for using
-def get_binuse(c: str, bin_from='./') -> Path:
-    b = Path(bin_from) / 'TPWT/bin' / c
+def get_binuse(c: str, bin_from="./") -> Path:
+    b = Path(bin_from) / "TPWT/bin" / c
     if b.exists():
         return b
     else:
         e = f"The binary {b} doesn't exist."
         raise FileNotFoundError(e)
 
+
 ###############################################################################
+
 
 def glob_patterns(method: str, path: Path, patterns: list) -> list:
     """
@@ -57,11 +59,11 @@ def get_dirname(target: str, *, snr=0, tcut=0, smooth=0, damping=0, period=0, di
 
 
 def get_sec_dirname(period, snr, dist) -> Path:
-    return Path(f'{period}sec_{snr}snr_{dist}dis')
+    return Path(f"{period}sec_{snr}snr_{dist}dis")
 
 
 def get_tpwt_dirname(snr, tcut, smooth, damping) -> Path:
-    return Path(f'TPWT_{snr}_snr_{tcut}tcut_{smooth}smooth_{damping}damping')
+    return Path(f"TPWT_{snr}_snr_{tcut}tcut_{smooth}smooth_{damping}damping")
 
 
 ###############################################################################
@@ -103,12 +105,15 @@ def remove_targets(targets: list):
 
 
 def read_xyz(f, ns: list[str]) -> pd.DataFrame:
-    return pd.read_csv(f, delim_whitespace=True, usecols=[0, 1, 2], header=None, names=ns)
+    return pd.read_csv(
+        f, delim_whitespace=True, usecols=[0, 1, 2], header=None, names=ns
+    )
 
 
 def read_xy(f) -> pd.DataFrame:
-    return pd.read_csv(f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"])
+    return pd.read_csv(
+        f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"]
+    )
 
 
 ###############################################################################
-

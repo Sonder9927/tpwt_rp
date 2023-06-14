@@ -10,13 +10,29 @@ from tpwt_p.check import check_exists
 def clock_sorted(points):
     from functools import reduce
     import math, operator
-    center = tuple(map(operator.truediv, reduce(lambda x, y: map(operator.add, x, y), points), [len(points)]*2))
-    clock = sorted(points, key=lambda p: (-135 -math.degrees(math.atan2(*tuple(map(operator.sub, p, center))[::-1])))%360, reverse=True)
+
+    center = tuple(
+        map(
+            operator.truediv,
+            reduce(lambda x, y: map(operator.add, x, y), points),
+            [len(points)] * 2,
+        )
+    )
+    clock = sorted(
+        points,
+        key=lambda p: (
+            -135 - math.degrees(math.atan2(*tuple(map(operator.sub, p, center))[::-1]))
+        )
+        % 360,
+        reverse=True,
+    )
     return clock
 
 
 def boundary_points(f):
-    stas = pd.read_csv(f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"])
+    stas = pd.read_csv(
+        f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"]
+    )
     points = np.array(stas[["lo", "la"]])
     hull = ConvexHull(points)
 
@@ -27,10 +43,10 @@ def times_of_crossing_boundary(point, points):
     times = 0
     for i in range(len(points)):
         segment_start = points[i]
-        if i == len(points)-1:
+        if i == len(points) - 1:
             segment_end = points[0]
         else:
-            segment_end = points[i+1]
+            segment_end = points[i + 1]
 
         if point.is_ray_intersects_segment(segment_start, segment_end):
             times += 1
@@ -39,7 +55,9 @@ def times_of_crossing_boundary(point, points):
 
 
 def points_inner(grid_file, points: list):
-    vels: pd.DataFrame = pd.read_csv(grid_file, delim_whitespace=True, names=["lo", "la", "vel"])
+    vels: pd.DataFrame = pd.read_csv(
+        grid_file, delim_whitespace=True, names=["lo", "la", "vel"]
+    )
     lo = [i.lo for i in points]
     la = [i.la for i in points]
     vels_in_rect: pd.DataFrame = vels[
@@ -61,7 +79,10 @@ def points_inner(grid_file, points: list):
         if times % 2 == 1:
             point_inner.append([point, vels_in_rect.vel[i]])
 
-    df = pd.DataFrame(data=[[i[0].lo, i[0].la, i[1]] for i in point_inner], columns=["lo", "la", "vel"])
+    df = pd.DataFrame(
+        data=[[i[0].lo, i[0].la, i[1]] for i in point_inner],
+        columns=["lo", "la", "vel"],
+    )
     # ic(point_inner[0])
 
     return df
@@ -90,5 +111,5 @@ def average_inner(grid_dir, ps):
     return data, avgvel
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     average_inner("./tpwt.26.360", "station.lst")
