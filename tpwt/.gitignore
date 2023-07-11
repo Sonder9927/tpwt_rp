@@ -1,6 +1,6 @@
 .ipynb_checkpoints
 __pycache__
 target/*
-TPWT/info/*
+TPWT/*
 temp
 test.py
