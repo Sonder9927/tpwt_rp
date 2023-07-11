@@ -8,6 +8,7 @@ from tpwt_p.rose import glob_patterns
 
 
 def mk_eqlistper(sac_dir: Path, evts, stas, region, nsta) -> Path:
+    # sourcery skip: inline-immediately-returned-variable
     events = find_events(evts, sac_dir)
     stations = find_stations(stas, region)
 
@@ -25,30 +26,29 @@ def mk_eqlistper(sac_dir: Path, evts, stas, region, nsta) -> Path:
 
 
 def process_events_tempper(sac_dir: Path, events, stas, nsta) -> dict:
-    temppers = dict()
+    temppers = {}
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         for e in events:
             future = executor.submit(process_event_tempper, sac_dir, e, stas, nsta)
-            temppers.update(future.result())
+            temppers |= future.result()
     return temppers
 
 
 def write_events_eqlistper(sac_dir: Path, temppers: dict):
     eqlistper = Path("target/eqlistper")
 
-    f = open(eqlistper, "w+")
-    # first line
-    f.write(f"{len(temppers)}\n")
+    with open(eqlistper, "w+") as f:
+        # first line
+        f.write(f"{len(temppers)}\n")
 
-    evt_list = sorted([*temppers])
+        evt_list = sorted([*temppers])
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for i, e in enumerate(evt_list):
-            future = executor.submit(write_event_eqlistper, temppers, sac_dir, e, i + 1)
-            f.write(future.result())
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for i, e in enumerate(evt_list):
+                future = executor.submit(write_event_eqlistper, temppers, sac_dir, e, i + 1)
+                f.write(future.result())
 
-    f.close()
     return eqlistper
 
 
@@ -69,12 +69,11 @@ def process_event_tempper(data: Path, evt, stas, nsta) -> dict:
 
     tempper = [sac for sta in stas if (sac := f"{evt}.{sta}.LHZ.sac") in sacs]
 
-    if len(tempper) <= nsta:
-        ic(evt, "not enough stations")
-        return {}
-    else:
+    if len(tempper) > nsta:
         # ic(evt, "done")
         return {evt: tempper}
+    ic(evt, "not enough stations")
+    return {}
 
 
 def write_event_eqlistper(temppers: dict, sac_dir: Path, evt, evt_id: int):
@@ -123,4 +122,4 @@ def find_stations(stas, area):
         & (stas.lo <= area.east)
     ]
 
-    return [i for i in sta_in_area["sta"]]
+    return list(sta_in_area["sta"])

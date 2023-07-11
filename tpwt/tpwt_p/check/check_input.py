@@ -26,19 +26,20 @@ class Check_In:
 
         return "No useful file found."
 
+
 def batch_check(target: Path) -> bool:
     st = obspy.read(target)
     tr = st[0]
 
     try:
         dist = tr.stats.sac["dist"]
-    except KeyError as _:
+    except KeyError:
         dist = False
 
     conditions = [
         len(target.parent.name) == 12,
-        len(target.name.split('.')[0]) == 12,
+        len(target.name.split(".")[0]) == 12,
         dist,
     ]
 
-    return True if all(conditions) else False
+    return all(conditions)

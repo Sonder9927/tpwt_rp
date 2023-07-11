@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 use std::cmp::Ordering;
 
-#[pyclass(text_signature = "(x,y)")]
+#[pyclass]
 /// Point class
 pub struct Point {
     x: f64,
@@ -10,7 +10,7 @@ pub struct Point {
 
 #[pymethods]
 impl Point {
-    #[new]
+    #[new(text_signature = "(x,y)")]
     fn new(l: Option<[f64; 2]>, x: Option<f64>, y: Option<f64>) -> Self {
         match l {
             Some(l) => {

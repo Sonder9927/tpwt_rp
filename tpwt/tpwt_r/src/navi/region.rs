@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 /// Region class
-#[pyclass(text_signature = "(region)")]
+#[pyclass]
 #[derive(Deserialize, Debug, Clone)]
 pub struct Region {
     w: f64,
@@ -15,7 +15,7 @@ pub struct Region {
 
 #[pymethods]
 impl Region {
-    #[new]
+    #[new(text_signature = "(region)")]
     fn new(region: HashMap<String, f64>) -> Self {
         Region {
             w: region["w"],

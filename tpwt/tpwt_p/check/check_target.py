@@ -5,6 +5,5 @@ def check_exists(target) -> Path:
     t = Path(target)
     if t.exists():
         return t
-    else:
-        de = f"Target {target} not found."
-        raise FileNotFoundError(de)
+    de = f"Target {target} not found."
+    raise FileNotFoundError(de)

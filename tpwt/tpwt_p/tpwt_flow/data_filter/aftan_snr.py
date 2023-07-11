@@ -1,10 +1,10 @@
 from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
-from icecream import ic
-import subprocess
 import os
+from pathlib import Path
+import subprocess
 
-from tpwt_p.rose import glob_patterns, get_binuse
+from icecream import ic
+from tpwt_p.rose import get_binuse, glob_patterns
 
 
 def process_events_aftan_snr(sac_dir: str, path: str):
@@ -69,8 +69,7 @@ def process_event_aftan_and_SNR(
 
 
 def aftani_c_pgl_TPWT_run(dir_ref: Path, sac_file: str, aftani_c_pgl_TPWT):
-    content = "0 2.5 5.0 10 250 20 1 0.5 0.2 2 "  # zui hou you ge kong ge...
-    content += sac_file
+    content = f"0 2.5 5.0 10 250 20 1 0.5 0.2 2 {sac_file}"
     param_dat = "param.dat"
     with open(param_dat, "w") as p:
         p.write(content)

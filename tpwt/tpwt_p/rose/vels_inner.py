@@ -1,10 +1,9 @@
-from scipy.spatial import ConvexHull
 from icecream import ic
-from tpwt_r import Point
 import numpy as np
 import pandas as pd
-
+from scipy.spatial import ConvexHull
 from tpwt_p.check import check_exists
+from tpwt_r import Point
 
 
 def clock_sorted(points):
@@ -18,20 +17,26 @@ def clock_sorted(points):
             [len(points)] * 2,
         )
     )
-    clock = sorted(
+    return sorted(
         points,
         key=lambda p: (
-            -135 - math.degrees(math.atan2(*tuple(map(operator.sub, p, center))[::-1]))
+            -135
+            - math.degrees(
+                math.atan2(*tuple(map(operator.sub, p, center))[::-1])
+            )
         )
         % 360,
         reverse=True,
     )
-    return clock
 
 
 def boundary_points(f):
     stas = pd.read_csv(
-        f, delim_whitespace=True, header=None, usecols=[1, 2], names=["lo", "la"]
+        f,
+        delim_whitespace=True,
+        header=None,
+        usecols=[1, 2],
+        names=["lo", "la"],
     )
     points = np.array(stas[["lo", "la"]])
     hull = ConvexHull(points)
@@ -43,11 +48,7 @@ def times_of_crossing_boundary(point, points):
     times = 0
     for i in range(len(points)):
         segment_start = points[i]
-        if i == len(points) - 1:
-            segment_end = points[0]
-        else:
-            segment_end = points[i + 1]
-
+        segment_end = points[0] if i == len(points) - 1 else points[i + 1]
         if point.is_ray_intersects_segment(segment_start, segment_end):
             times += 1
 
@@ -79,13 +80,10 @@ def points_inner(grid_file, points: list):
         if times % 2 == 1:
             point_inner.append([point, vels_in_rect.vel[i]])
 
-    df = pd.DataFrame(
+    return pd.DataFrame(
         data=[[i[0].lo, i[0].la, i[1]] for i in point_inner],
         columns=["lo", "la", "vel"],
     )
-    # ic(point_inner[0])
-
-    return df
 
 
 def average_inner(grid_dir, ps):
@@ -96,7 +94,9 @@ def average_inner(grid_dir, ps):
         ps = check_exists(ps)
         bp = boundary_points(ps)
     else:
-        raise ValueError("Unvalid input points. Please give a list or a string.")
+        raise ValueError(
+            "Unvalid input points. Please give a list or a string."
+        )
 
     # po = clock_sorted(boundary_points)  # no need
 

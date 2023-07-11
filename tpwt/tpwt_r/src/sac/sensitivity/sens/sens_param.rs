@@ -22,6 +22,7 @@ impl SensParam {
         let n = self.itvl.nx();
         (n, n)
     }
+
     pub fn sens_loop(&self) -> Vec<[usize; 2]> {
         let n = self.itvl.nx();
         (0..n)

@@ -14,7 +14,7 @@ __author__ = "Sonder"
 def evts_from_30_to_120(param):
     evt = tpwt_flow.Evt_Make(param.target("evt30"), param.target("evt120"))
     evt.concat()
-    evt.cut_time_delta(param.parameter("time_delta"))
+    evt.cut_time_delta(param.parameter("timedelta"))
     pattern = "%Y-%m-%dT%H:%M:%S"
     cat_form = "%Y/%m/%d,%H:%M:%S"
     evt.evt_cat(param.target("evt_cat"), pattern, cat_form)
@@ -27,7 +27,9 @@ def evt_cut(param):
         param.target("og_data")
     )  # if set z_pattern to '1' the new file will be `file_1`
     data.cut_event(
-        param.target("cut_dir"), param.target("evt_cat"), param.parameter("time_delta")
+        param.target("cut_dir"),
+        param.target("evt_cat"),
+        param.parameter("time_delta"),
     )  # if cut_from: use cut_from else: use self.only_Z_1Hz
 
 
@@ -56,6 +58,14 @@ def quanlity_control(param):
 def tpwt_iter(param):
     iter = tpwt_flow.TPWT_Iter(param)
     iter.iter()
+
+
+def mc_make():
+    tpwt_flow.mc.make()
+
+
+def mc_iter():
+    tpwt_flow.mc.iter()
 
 
 def main(param_json: str):

@@ -29,7 +29,9 @@ def inversion_nodes_TPWT(out_file: str, region, dgrid=[0.5, 0.5]):
                 dy = circ * dlat
                 dx = circ * np.cos(rlat * convdeg) * dlon
 
-                content = "{:8.2f}{:8.2f}{:8.3f}{:8.3f}\n".format(rlat, rlon, dx, dy)
+                content = "{:8.2f}{:8.2f}{:8.3f}{:8.3f}\n".format(
+                    rlat, rlon, dx, dy
+                )
                 f.write(content)
 
         for j in [lonmin + 2 * dlon, lonmax - 2 * dlon]:

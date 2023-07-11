@@ -3,7 +3,7 @@ use pyo3::prelude::*;
 use sacio::{Sac, SacError, SacString};
 
 /// Class SacEvtSta
-#[pyclass(text_signature = "(sac_file)")]
+#[pyclass]
 pub struct Ses {
     file: String,
     sac: Sac,
@@ -11,7 +11,7 @@ pub struct Ses {
 
 #[pymethods]
 impl Ses {
-    #[new]
+    #[new(text_signature = "(sac_file)")]
     fn new(file: String) -> Self {
         let sac = match Sac::from_file(&file) {
             Ok(s) => s,
@@ -52,7 +52,7 @@ impl Ses {
         self.sac.set_event_location(evla, evlo, evdp).unwrap();
     }
 
-    fn to_file(&mut self, target: Option<&str>) -> PyResult<String> {
+    fn save(&mut self, target: Option<&str>) -> PyResult<String> {
         // save to the target file if target given
         let ffrom: &str = &self.file;
         let fto = if let Some(t) = target { t } else { &self.file };

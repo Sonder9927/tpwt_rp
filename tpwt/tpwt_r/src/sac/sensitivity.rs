@@ -30,8 +30,7 @@ pub fn sac_sens(sac_file: &str, phvel: f32, smooth: i64, sens_file: &str) -> PyR
     let [freq, amplitude] = sac_peak::get_peak_data(sac_file);
 
     let sp = sens::SensParam::new(phvel, smooth);
-    let [phsens, ampsens] = sens::_unsmoothed_sensitivity_kernels(freq, amplitude, &sp);
-    let [avgphsens, avgampsens] = sens::smoothed_sensitivity_kernels(phsens, ampsens, &sp, smooth);
+    let [avgphsens, avgampsens] = sens::smoothed_sensitivity_kernels(freq, amplitude, &sp, smooth);
 
     // write to file
     let mut f = File::create(sens_file)?;
@@ -41,8 +40,8 @@ pub fn sac_sens(sac_file: &str, phvel: f32, smooth: i64, sens_file: &str) -> PyR
     let beg = sp.itvl.x(0);
     let delta = sp.itvl.dx();
     let content = f!(" {n} {beg} {delta} \n");
-    f.write(content.as_bytes())?;
-    f.write(content.as_bytes())?;
+    f.write_all(content.as_bytes())?;
+    f.write_all(content.as_bytes())?;
 
     // smoothed sens
     let avgsens = sp
@@ -58,7 +57,7 @@ pub fn sac_sens(sac_file: &str, phvel: f32, smooth: i64, sens_file: &str) -> PyR
         .collect::<Vec<String>>();
 
     for s in avgsens {
-        f.write(s.as_bytes())?;
+        f.write_all(s.as_bytes())?;
     }
 
     Ok(())

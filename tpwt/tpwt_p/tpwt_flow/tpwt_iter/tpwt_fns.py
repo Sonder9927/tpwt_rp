@@ -1,5 +1,6 @@
-import os, subprocess
+import os
 import shutil
+import subprocess
 
 from tpwt_p.rose import get_binuse, remove_targets
 import tpwt_r
@@ -69,7 +70,7 @@ def sensitivity_TPWT(
     # # sensitivity_wavetype
     # sen_input = output
     sen_output = f"sens{per}s{smooth}km.dat"
-    tpwt_r.sac_sens(input, sen_output)
+    tpwt_r.sac_sens(input, vel, smooth, sen_output)
     # sensitivity = get_binuse(f'sensitivity_{wave_type}', bin_from)
 
     # cmd_list = [
