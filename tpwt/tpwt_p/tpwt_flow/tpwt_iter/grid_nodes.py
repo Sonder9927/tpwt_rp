@@ -1,10 +1,12 @@
 import numpy as np
 
 
-def inversion_nodes_TPWT(out_file: str, region, dgrid=[0.5, 0.5]):
+def inversion_nodes_TPWT(out_file: str, region, dgrid=None):
     """
     create inversion grid nodes
     """
+    if dgrid is None:
+        dgrid = [0.5, 0.5]
     convdeg = np.pi / 180
     circ = convdeg * 6371
 
