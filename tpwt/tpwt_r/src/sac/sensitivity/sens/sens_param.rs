@@ -27,14 +27,8 @@ impl SensParam {
         let n = self.itvl.nx();
         (0..n)
             .into_par_iter()
-            .map(|x| {
-                (0..n)
-                    .into_par_iter()
-                    .map(|y| [x, y])
-                    .collect::<Vec<[usize; 2]>>()
-            })
-            .flatten()
-            .collect::<Vec<[usize; 2]>>()
+            .flat_map(|x| (0..n).into_par_iter().map(move |y| [x, y]))
+            .collect()
     }
 }
 
