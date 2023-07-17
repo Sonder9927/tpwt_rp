@@ -1,80 +1,72 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-import numpy as np
 import pandas as pd
 import shutil
 
 from tpwt_p.rose import re_create_dir  # pyright: ignore
 
 
-def mkdir_grids(input_dir, output_dir, region, dgrid=[0.5, 0.5], periods=None):
-    in_path = Path(input_dir)
-    if periods is None:
-        # extract periods of files in path
-        # pers = [int(f.name.split("_")[-1]) for f in in_path.glob("**/*")]
-        pers = [f.name.split("_")[-1] for f in in_path.glob("**/*")]
+def merge_periods_data(grid_path: Path, identifier: str):
+    merged_data = None
+    for f in grid_path.glob(f"*/*{identifier}*"):
+        per = f.stem.split("_")[-1]
+        col_name = f"{identifier}_{per}"
+        data = pd.read_csv(
+            f, header=None, delim_whitespace=True, names=["x", "y", col_name]
+        )
+        # identifier = f"_{per}"
+        if merged_data is None:
+            merged_data = data
+        else:
+            merged_data = pd.merge(
+                merged_data,
+                data,
+                on=["x", "y"],
+                how="left",
+            )
+
+        if col_name not in merged_data.columns:
+            col_new = (
+                merged_data[f"{col_name}_x"] + merged_data[f"{col_name}_y"]
+            ) / 2
+            merged_data[col_name] = col_new
+
+    if merged_data is not None:
+        return merged_data
     else:
-        pers = periods
+        raise ValueError("No grid data into!")
 
-    out_path = Path(output_dir)
 
-    lonmax = region.east + 2
-    lonmin = region.west - 2
-    latmax = region.north + 2
-    latmin = region.south - 2
-    [dlon, dlat] = dgrid
-
-    nlat = int((latmax - latmin) / dlat) + 1
-    nlon = int((lonmax - lonmin) / dlon) + 1
-    lons = [ilon * dlon + lonmin for ilon in range(nlon)]
-    lats = [ilat * dlat + latmin for ilat in range(nlat)]
-    grids = np.array([[ilon, ilat] for ilon in lons for ilat in lats])
-
-    # make phase vel dict
-    per_VS = {}
+def mkdir_grids_path(grid_dir, output_dir):
+    gp = Path(grid_dir)
+    out_path = re_create_dir(output_dir)
+    # make grid phase vel of every period dict
+    merged_vel = merge_periods_data(gp, "vel")
+    merged_std = merge_periods_data(gp, "std")
+    merged_data = pd.merge(merged_vel, merged_std, on=["x", "y"], how="left")
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for per in pers:
-            future = executor.submit(per_vel_std, in_path, per)
-            per_vs = future.result()
-            np_vs = [i.reshape((nlon, nlat)) for i in per_vs]
-            per_VS |= {per: [np_vs]}
-
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        for [lon, lat] in grids:
-            per_vel = None
-            gp = re_create_dir(out_path / rf"{lon:.2f}_{lat:.2f}")
-            executor.submit(mc_init, in_path, gp, *vel_std)
+        for _, vs in merged_data.iterrows():
+            executor.submit(init_grid_path, vs.to_dict(), out_path)
 
 
-def per_vel_std(grid_path: Path, per: str):
-    ant_path = grid_path / "ant_grids"
-    tpwt_path = grid_path / "tpwt_grids"
+def init_grid_path(vs: dict[str, float], out_path: Path):
+    # mkdir grid path
+    lo = vs["x"]
+    la = vs["y"]
+    init_path = out_path / f"{lo:.2f}_{la:.2f}"
+    init_path.mkdir()
 
-    ant_vel_grid = ant_path / f"ant_{per}"
-    tpwt_vel_grid = tpwt_path / f"tpwt_{per}"
-    vel_grids = [ant_vel_grid, tpwt_vel_grid]
-    vels_df = pd.DataFrame(
-        {
-            f"col_{i}": pd.read_csv(
-                f, delim_whitespace=True, usecols=[2], names=["vel"]
-            ).vel
-            for i, f in enumerate(vel_grids)
-            if f.exists()
-        }
-    )
-    vel = vels_df.to_numpy().mean(axis=1)
-    tpwt_std_grid = tpwt_path / f"tpwt_std_{per}"
-    std_df = pd.read_csv(
-        tpwt_std_grid, delim_whitespace=True, usecols=[2], names=["vel"]
-    )
-    std = std_df.to_numpy()
-
-    return vel, std
-
-
-def mc_init(grid_path: Path, init_path: Path, pers):
+    # set input files
     shutil.copy("TPWT/utils/mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
     shutil.copy("TPWT/utils/mc_PARAM.inp", init_path / r"para.inp")
     grid_phase = init_path / r"phase.input"
-    with open(grid_phase, "w"):
-        mc_phase(init_path, pers)
+    lines = ["2 1\n"]
+    for i, v in vs.items():
+        if "vel_" in i:
+            per = i[4:]
+            std = vs.get(f"std_{per}") or 10
+            lines.append(f"2 1 1 {per} {v} {std}\n")
+    lines += ["0\n0"]
+    with open(grid_phase, "w") as f:
+        for line in lines:
+            f.write(line)

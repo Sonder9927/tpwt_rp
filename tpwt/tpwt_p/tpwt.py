@@ -1,6 +1,5 @@
 from icecream import ic
 
-# from .tpwt_p import tpwt_flow
 from . import tpwt_flow
 from .check import Check_In
 
@@ -56,8 +55,8 @@ def quanlity_control(param):
 
 
 def tpwt_iter(param):
-    iter = tpwt_flow.TPWT_Iter(param)
-    iter.iter()
+    tpwt = tpwt_flow.TPWT_Iter(param)
+    tpwt.iter()
 
 
 def mc_make():
@@ -89,6 +88,9 @@ def main(param_json: str):
 
     # mass control
     quanlity_control(param)
+
+    # tpwt
+    tpwt_iter(param)
 
 
 if __name__ == "__main__":
