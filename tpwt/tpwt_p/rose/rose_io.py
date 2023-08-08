@@ -117,3 +117,35 @@ def read_xy(f) -> pd.DataFrame:
         usecols=[1, 2],
         names=["lo", "la"],
     )
+
+
+def merge_periods_data(grids_path: Path, identifier: str) -> pd.DataFrame:
+    merged_data = None
+    for f in grids_path.glob(f"*/*{identifier}*"):
+        per = f.stem.split("_")[-1]
+        col_name = f"{identifier}_{per}"
+        data = pd.read_csv(
+            f, header=None, delim_whitespace=True, names=["x", "y", col_name]
+        )
+        if merged_data is None:
+            merged_data = data
+        else:
+            merged_data = pd.merge(
+                merged_data,
+                data,
+                on=["x", "y"],
+                how="left",
+            )
+
+        if col_name not in merged_data.columns:
+            col_new = (
+                merged_data[f"{col_name}_x"] + merged_data[f"{col_name}_y"]
+            ) / 2
+            merged_data[col_name] = col_new
+            merged_data.drop(f"{col_name}_x")
+            merged_data.drop(f"{col_name}_y")
+
+    if merged_data is not None:
+        return merged_data
+    else:
+        raise ValueError("No grid data into!")

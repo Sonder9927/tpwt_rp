@@ -2,6 +2,7 @@ from icecream import ic
 
 from . import tpwt_flow
 from .check import Check_In
+from tpwt_flow.mc import merge_periods_data
 
 # from tpwt_p.info_per import period_info
 import tpwt_r
@@ -59,12 +60,9 @@ def tpwt_iter(param):
     tpwt.iter()
 
 
-def mc_make():
-    tpwt_flow.mc.make()
-
-
-def mc_iter():
-    tpwt_flow.mc.iter()
+def mcmc():
+    mc = tpwt_flow.MCMC(param)
+    mc.init()
 
 
 def main(param_json: str):
@@ -91,6 +89,9 @@ def main(param_json: str):
 
     # tpwt
     tpwt_iter(param)
+
+    # mc
+    mcmc(param)
 
 
 if __name__ == "__main__":

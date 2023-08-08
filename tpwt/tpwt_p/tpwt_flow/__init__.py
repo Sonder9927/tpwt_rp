@@ -7,6 +7,9 @@ from .tpwt_iter import TPWT_Iter
 
 from .grids_collect import tpwt_grids_collect
 
+from .mc import MCMC
+
+
 __all__ = [
     "Evt_Make",
     "Evt_Cut",
@@ -14,4 +17,5 @@ __all__ = [
     "Data_Filter",
     "TPWT_Iter",
     "tpwt_grids_collect",
+    "MCMC",
 ]

@@ -1,3 +1,3 @@
-from .grid_data import merge_periods_data
+from .mcmc import MCMC
 
-__all__ = ["merge_periods_data"]
+__all__ = ["MCMC"]
