@@ -60,9 +60,9 @@ def tpwt_iter(param):
     tpwt.iter()
 
 
-def mcmc():
+def mcmc(param):
     mc = tpwt_flow.MCMC(param)
-    mc.init()
+    mc.mc_init()
 
 
 def main(param_json: str):
