@@ -142,8 +142,6 @@ def merge_periods_data(grids_path: Path, identifier: str) -> pd.DataFrame:
                 merged_data[f"{col_name}_x"] + merged_data[f"{col_name}_y"]
             ) / 2
             merged_data[col_name] = col_new
-            merged_data.drop(f"{col_name}_x")
-            merged_data.drop(f"{col_name}_y")
 
     if merged_data is not None:
         return merged_data
