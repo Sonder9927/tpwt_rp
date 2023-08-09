@@ -37,15 +37,15 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
     #         std = vs.get(f"std_{per}") or 10
     #         lines.append(f"2 1 1 {per} {v} {std}\n")
     lines = []
-    for per in sorted(periods):
+    for per in periods:
         vel = vs.get(f"vel_{per}")
         if vel is None:
             raise ValueError(f"No grid data of period {per}")
         std = vs.get(f"std_{per}") or 10
-        lines.append(f"2 1 1 {per} {vel} {std}\n")
+        lines.append(f"2 1 1 {per} {vel} {std * .001}\n")
 
     with open(grid_phase, "w") as f:
-        f.write("2 1\n")
+        f.write(f"1 {len(lines)}\n")
         for line in sorted(lines):
             f.write(line)
         f.write("0\n0")
