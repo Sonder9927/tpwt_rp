@@ -121,7 +121,7 @@ def read_xy(f) -> pd.DataFrame:
 
 def merge_periods_data(
     grids_path: Path, method: str, identifier: str
-) -> pd.DataFrame:
+) -> pd.DataFrame | None:
     merged_data = None
     for f in grids_path.glob(f"{method}_grids/*{identifier}*"):
         per = f.stem.split("_")[-1]
@@ -139,7 +139,4 @@ def merge_periods_data(
                 how="left",
             )
 
-    if merged_data is not None:
-        return merged_data
-    else:
-        raise ValueError("No grid data info!")
+    return merged_data

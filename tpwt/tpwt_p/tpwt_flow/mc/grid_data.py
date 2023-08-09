@@ -55,16 +55,23 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
 def merge_methods_periods(gp: Path, identifier: str):
     merged_ant = merge_periods_data(gp, "ant", identifier)
     merged_tpwt = merge_periods_data(gp, "tpwt", identifier)
-    merged_data = pd.merge(
-        merged_ant,
-        merged_tpwt,
-        on=["x", "y"],
-        how="left",
-    )
-    for c in merged_data.columns:
-        if "_x" in c:
-            col_name = c[:-2]
-            col_new = (
-                merged_data[f"{col_name}_x"] + merged_data[f"{col_name}_y"]
-            ) / 2
-            merged_data[col_name] = col_new
+    if merged_tpwt is None:
+        raise ValueError(f"No grid info for id: {identifier}")
+    if merged_ant is not None:
+        merged_data = pd.merge(
+            merged_ant,
+            merged_tpwt,
+            on=["x", "y"],
+            how="left",
+        )
+        for c in merged_data.columns:
+            if "_x" in c:
+                col_name = c[:-2]
+                col_new = (
+                    merged_data[f"{col_name}_x"] + merged_data[f"{col_name}_y"]
+                ) / 2
+                merged_data[col_name] = col_new
+    else:
+        merged_data = merged_tpwt
+
+    return merged_data
