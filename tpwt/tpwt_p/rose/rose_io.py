@@ -119,9 +119,11 @@ def read_xy(f) -> pd.DataFrame:
     )
 
 
-def merge_periods_data(grids_path: Path, identifier: str) -> pd.DataFrame:
+def merge_periods_data(
+    grids_path: Path, method: str, identifier: str
+) -> pd.DataFrame:
     merged_data = None
-    for f in grids_path.glob(f"*/*{identifier}*"):
+    for f in grids_path.glob(f"{method}_grids/*{identifier}*"):
         per = f.stem.split("_")[-1]
         col_name = f"{identifier}_{per}"
         data = pd.read_csv(
@@ -137,13 +139,7 @@ def merge_periods_data(grids_path: Path, identifier: str) -> pd.DataFrame:
                 how="left",
             )
 
-        if col_name not in merged_data.columns:
-            col_new = (
-                merged_data[f"{col_name}_x"] + merged_data[f"{col_name}_y"]
-            ) / 2
-            merged_data[col_name] = col_new
-
     if merged_data is not None:
         return merged_data
     else:
-        raise ValueError("No grid data into!")
+        raise ValueError("No grid data info!")

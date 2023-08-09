@@ -10,7 +10,24 @@ def mkdir_grids_path(grids_dir, output_dir, periods):
     gp = Path(grids_dir)
     out_path = re_create_dir(output_dir)
     # make dict of grid phase vel of every period
-    merged_vel = merge_periods_data(gp, "vel")
+    merged_ant = merge_periods_data(gp, "ant", "vel")
+    merged_tpwt = merge_periods_data(gp, "tpwt", "vel")
+    merged_vel = pd.merge(
+        merged_ant,
+        merged_tpwt,
+        on=["x", "y"],
+        how="left",
+    )
+    for c in merged_vel.columns:
+        if "_x" in c:
+            col_name = c[:-2]
+            col_new = (
+                merged_vel[f"{col_name}_x"] + merged_vel[f"{col_name}_y"]
+            ) / 2
+            merged_vel[col_name] = col_new
+            merged_vel.drop(f"{col_name}_x")
+            merged_vel.drop(f"{col_name}_y")
+
     # make dict of grid std of every period
     merged_std = merge_periods_data(gp, "std")
     # merge vel and std
