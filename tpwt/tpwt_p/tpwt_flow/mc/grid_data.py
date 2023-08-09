@@ -6,7 +6,7 @@ import pandas as pd
 from tpwt_p.rose import merge_periods_data, re_create_dir  # pyright: ignore
 
 
-def mkdir_grids_path(grids_dir, output_dir):
+def mkdir_grids_path(grids_dir, output_dir, periods):
     gp = Path(grids_dir)
     out_path = re_create_dir(output_dir)
     # make dict of grid phase vel of every period
@@ -17,10 +17,10 @@ def mkdir_grids_path(grids_dir, output_dir):
     merged_data = pd.merge(merged_vel, merged_std, on=["x", "y"], how="left")
     with ThreadPoolExecutor(max_workers=10) as executor:
         for _, vs in merged_data.iterrows():
-            executor.submit(init_grid_path, vs.to_dict(), out_path)
+            executor.submit(init_grid_path, vs.to_dict(), out_path, periods)
 
 
-def init_grid_path(vs: dict[str, float], out_path: Path):
+def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
     # mkdir grid path
     lo = vs["x"]
     la = vs["y"]
@@ -31,12 +31,19 @@ def init_grid_path(vs: dict[str, float], out_path: Path):
     shutil.copy("TPWT/utils/mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
     shutil.copy("TPWT/utils/mc_PARAM.inp", init_path / r"para.inp")
     grid_phase = init_path / r"phase.input"
+    # for i, v in vs.items():
+    #     if "vel_" in i:
+    #         per = i[4:]
+    #         std = vs.get(f"std_{per}") or 10
+    #         lines.append(f"2 1 1 {per} {v} {std}\n")
     lines = []
-    for i, v in vs.items():
-        if "vel_" in i:
-            per = i[4:]
-            std = vs.get(f"std_{per}") or 10
-            lines.append(f"2 1 1 {per} {v} {std}\n")
+    for per in sorted(periods):
+        vel = vs.get(f"vel_{per}")
+        if vel is None:
+            raise ValueError(f"No grid data of period {per}")
+        std = vs.get(f"std_{per}") or 10
+        lines.append(f"2 1 1 {per} {vel} {std}\n")
+
     with open(grid_phase, "w") as f:
         f.write("2 1\n")
         for line in sorted(lines):
