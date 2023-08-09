@@ -42,7 +42,7 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
         if vel is None:
             raise ValueError(f"No grid data of period {per}")
         std = vs.get(f"std_{per}") or 10
-        lines.append(f"2 1 1 {per:>3i} {vel:.f} {std * .001:.f}\n")
+        lines.append(f"2 1 1 {per:>3} {vel:f} {std * .001:f}\n")
 
     with open(grid_phase, "w") as f:
         f.write(f"1 {len(lines)}\n")
