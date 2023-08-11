@@ -1,18 +1,15 @@
+from .points import points_boundary, points_inner
 from .rose_io import (
     get_binuse,
-    glob_patterns,
     get_dirname,
-    remove_targets,
-    re_create_dir,
-    read_xyz,
-    read_xy,
+    glob_patterns,
     merge_periods_data,
+    re_create_dir,
+    read_xy,
+    read_xyz,
+    remove_targets,
 )
-
 from .rose_math import average, dicts_of_per_vel
-
-# from .vels_inner import average_inner
-from points import points_inner, points_boundary
 
 __all__ = [
     "get_binuse",
