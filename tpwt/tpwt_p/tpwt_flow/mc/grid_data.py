@@ -13,7 +13,7 @@ from tpwt_p.rose import (
 
 
 def mkdir_grids_path(
-    grids_dir: str, moho_file: str, output_dir, periods, *, sta_file=None
+    grids_dir: str, moho_file: str, output_dir, periods, sta_file
 ):
     gp = Path(grids_dir)
     out_path = re_create_dir(output_dir)
