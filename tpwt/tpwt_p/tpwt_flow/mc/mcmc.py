@@ -5,5 +5,5 @@ class MCMC:
     def __init__(self, param) -> None:
         self.param = param
 
-    def mc_init(self, periods):
-        mkdir_grids_path("target/grids", "target/mcmc", periods)
+    def mc_init(self, moho_file, periods):
+        mkdir_grids_path("target/grids", moho_file, "target/mcmc", periods)

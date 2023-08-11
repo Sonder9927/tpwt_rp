@@ -66,7 +66,7 @@ def mcmc(param):
         60, 70, 80, 90, 100, 111, 125, 143,
         ]  # fmt: skip
     mc = tpwt_flow.MCMC(param)
-    mc.mc_init(periods)
+    mc.mc_init("TPWT/utils/moho.lst", periods)
 
 
 def main(param_json: str):

@@ -27,25 +27,22 @@ pub fn points_in_hull(
     let hull = convex_hull_from_file(fhull).unwrap();
     let points_inner: Vec<[f64; 3]> = points_from_file_in_hull(fpoints, hull).unwrap();
 
-    match ftarget {
-        Some(f) => {
-            let array_points = Array2::from(points_inner.clone());
-            let ss: Vec<Series> = array_points
-                .axis_iter(ndarray::Axis(1))
-                // .columns()
-                .into_par_iter()
-                .enumerate()
-                .map(|(i, c)| Series::new(&f!("column_{}", i), c.to_vec()))
-                .collect();
+    if let Some(f) = ftarget {
+        let array_points = Array2::from(points_inner.clone());
+        let ss: Vec<Series> = array_points
+            .axis_iter(ndarray::Axis(1))
+            // .columns()
+            .into_par_iter()
+            .enumerate()
+            .map(|(i, c)| Series::new(&f!("column_{}", i), c.to_vec()))
+            .collect();
 
-            let mut df_points: DataFrame = DataFrame::new(ss).unwrap();
-            let mut f = File::create(f)?;
-            CsvWriter::new(&mut f)
-                .has_header(true)
-                .finish(&mut df_points)
-                .unwrap();
-        }
-        None => (),
+        let mut df_points: DataFrame = DataFrame::new(ss).unwrap();
+        let mut f = File::create(f)?;
+        CsvWriter::new(&mut f)
+            .has_header(true)
+            .finish(&mut df_points)
+            .unwrap();
     };
 
     Ok(points_inner)

@@ -4,11 +4,24 @@ import shutil
 
 import pandas as pd
 from tpwt_p.rose import merge_periods_data, re_create_dir  # pyright: ignore
+from tpwt_p.gmt import grid_sample  # pyright: ignore
 
 
-def mkdir_grids_path(grids_dir, output_dir, periods):
+def mkdir_grids_path(grids_dir: str, moho_file: str, output_dir, periods):
     gp = Path(grids_dir)
     out_path = re_create_dir(output_dir)
+    # sample moho grid
+    moho_sta = pd.read_csv(
+        moho_file,
+        header=None,
+        delim_whitespace=True,
+        usecols=[0, 1, 2],
+        names=["x", "y", "z"],
+    )
+    moho_sta = moho_sta[["y", "x", "z"]]
+    moho_data = grid_sample(
+        moho_sta, region=[115, 123, 26.5, 35.5], spacing=0.5
+    )
     # make dict of grid phase vel of every period
     merged_vel = merge_methods_periods(gp, "vel")
     # make dict of grid std of every period
@@ -16,6 +29,7 @@ def mkdir_grids_path(grids_dir, output_dir, periods):
 
     # merge vel and std
     merged_data = pd.merge(merged_vel, merged_std, on=["x", "y"], how="left")
+    merged_data = pd.merge(merged_data, moho_data, on=["x", "y"], how="left")
     with ThreadPoolExecutor(max_workers=10) as executor:
         for _, vs in merged_data.iterrows():
             executor.submit(init_grid_path, vs.to_dict(), out_path, periods)
@@ -29,27 +43,37 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
     init_path.mkdir()
 
     # set input files
+    # dram T
     shutil.copy("TPWT/utils/mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
-    shutil.copy("TPWT/utils/mc_PARAM.inp", init_path / r"para.inp")
+    # param
+    shutil.copy("TPWT/utils/mc_PARAM.inp", (fin := init_path / r"para.inp"))
+    moho = vs.get("z") or 30
+    with open(fin, "w+") as f:
+        lines = f.readlines()
+        for line in lines:
+            if line.startswith(st := "0 1"):
+                f.write(f"{st} {moho-5:2.5f} {moho+5:2.5f}\n")
+            else:
+                f.write(line)
+
+    # phase
     grid_phase = init_path / r"phase.input"
-    # for i, v in vs.items():
-    #     if "vel_" in i:
-    #         per = i[4:]
-    #         std = vs.get(f"std_{per}") or 10
-    #         lines.append(f"2 1 1 {per} {v} {std}\n")
     lines = []
     for per in sorted(periods):
         vel = vs.get(f"vel_{per}")
         if vel is None:
             raise ValueError(f"No grid data of period {per}")
-        std = vs.get(f"std_{per}") or 10
+        std = vs.get(f"std_{per}") or 20
         lines.append(f"2 1 1 {per:>3} {vel:f} {std * .001:f}\n")
+    lines.insert(0, f"1 {len(lines)}\n")
+    lines.append("0\n0")
 
     with open(grid_phase, "w") as f:
-        f.write(f"1 {len(lines)}\n")
-        for line in lines:
-            f.write(line)
-        f.write("0\n0")
+        # f.write(f"1 {len(lines)}\n")
+        # for line in lines:
+        #     f.write(line)
+        # f.write("0\n0")
+        f.writelines(lines)
 
 
 def merge_methods_periods(gp: Path, identifier: str):
