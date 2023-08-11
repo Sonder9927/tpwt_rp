@@ -46,13 +46,14 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
     # dram T
     shutil.copy("TPWT/utils/mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
     # param
-    shutil.copy("TPWT/utils/mc_PARAM.inp", (fin := init_path / r"para.inp"))
+    shutil.copy("TPWT/utils/mc_PARAM.inp", fin := init_path / r"para.inp")
     moho = vs.get("z") or 30
-    with open(fin, "w+") as f:
+    with open(fin, "r+", encoding="utf-8") as f:
         lines = f.readlines()
+        f.seek(0)
         for line in lines:
             if line.startswith(st := "0 1"):
-                f.write(f"{st} {moho-5:2.5f} {moho+5:2.5f}\n")
+                f.write(f"{st} {moho-2.5:2.5f} {moho+2.5:2.5f}\n")
             else:
                 f.write(line)
 
