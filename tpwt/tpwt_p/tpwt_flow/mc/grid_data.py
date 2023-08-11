@@ -3,11 +3,18 @@ from pathlib import Path
 import shutil
 
 import pandas as pd
-from tpwt_p.rose import merge_periods_data, re_create_dir  # pyright: ignore
-from tpwt_p.gmt import grid_sample  # pyright: ignore
+from tpwt_p.gmt import grid_sample
+from tpwt_p.rose import (
+    merge_periods_data,
+    points_boundary,
+    points_inner,
+    re_create_dir,
+)  # pyright: ignore
 
 
-def mkdir_grids_path(grids_dir: str, moho_file: str, output_dir, periods):
+def mkdir_grids_path(
+    grids_dir: str, moho_file: str, output_dir, periods, *, sta_file=None
+):
     gp = Path(grids_dir)
     out_path = re_create_dir(output_dir)
     # sample moho grid
@@ -30,8 +37,20 @@ def mkdir_grids_path(grids_dir: str, moho_file: str, output_dir, periods):
     # merge vel and std
     merged_data = pd.merge(merged_vel, merged_std, on=["x", "y"], how="left")
     merged_data = pd.merge(merged_data, moho_data, on=["x", "y"], how="left")
+    if sta_file is None:
+        merged_inner = merged_data
+    else:
+        sta = pd.read_csv(
+            sta_file,
+            index_col=None,
+            header=None,
+            usecols=[1, 2],
+            delim_whitespace=True,
+        )
+        boundary = points_boundary(sta)
+        merged_inner = points_inner(merged_data, boundary=boundary)
     with ThreadPoolExecutor(max_workers=10) as executor:
-        for _, vs in merged_data.iterrows():
+        for _, vs in merged_inner.iterrows():
             executor.submit(init_grid_path, vs.to_dict(), out_path, periods)
 
 
@@ -52,7 +71,7 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
         lines = f.readlines()
         f.seek(0)
         for line in lines:
-            if line.startswith(st := "0 1"):
+            if line.startswith(st := " 0 1"):
                 f.write(f"{st} {moho-2.5:2.5f} {moho+2.5:2.5f}\n")
             else:
                 f.write(line)

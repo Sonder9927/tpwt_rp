@@ -10,7 +10,9 @@ from .rose_io import (
 )
 
 from .rose_math import average, dicts_of_per_vel
-from .vels_inner import average_inner
+
+# from .vels_inner import average_inner
+from points import points_inner, points_boundary
 
 __all__ = [
     "get_binuse",
@@ -22,6 +24,8 @@ __all__ = [
     "read_xyz",
     "average",
     "dicts_of_per_vel",
-    "average_inner",
+    # "average_inner",
+    "points_boundary",
+    "points_inner",
     "merge_periods_data",
 ]
