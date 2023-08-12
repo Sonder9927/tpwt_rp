@@ -9,7 +9,7 @@ from tpwt_p.rose import (
     points_boundary,
     points_inner,
     re_create_dir,
-)  # pyright: ignore
+)
 
 
 def mkdir_grids_path(
@@ -49,30 +49,36 @@ def mkdir_grids_path(
         )
         boundary = points_boundary(sta)
         merged_inner = points_inner(merged_data, boundary=boundary)
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        utils = Path("TPWT/utils")
+        # models
+        pool.submit(shutil.copytree, utils / "models", out_path / "models")
         for _, vs in merged_inner.iterrows():
-            executor.submit(init_grid_path, vs.to_dict(), out_path, periods)
+            pool.submit(init_grid_path, vs.to_dict(), out_path, periods, utils)
 
 
-def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
+def init_grid_path(
+    vs: dict[str, float], out_path: Path, periods: list[int], utils: Path
+):
     # mkdir grid path
     lo = vs["x"]
     la = vs["y"]
     init_path = out_path / f"{lo:.2f}_{la:.2f}"
     init_path.mkdir()
 
-    # set input files
+    # litmod
+    shutil.copy(utils / "mc_LITMOD", init_path / r"LITMOD")
     # dram T
-    shutil.copy("TPWT/utils/mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
+    shutil.copy(utils / "mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
     # param
-    shutil.copy("TPWT/utils/mc_PARAM.inp", fin := init_path / r"para.inp")
+    shutil.copy(utils / "mc_PARAM.inp", fin := init_path / r"para.inp")
     moho = vs.get("z") or 30
     with open(fin, "r+", encoding="utf-8") as f:
         lines = f.readlines()
         f.seek(0)
         for line in lines:
             if line.startswith(st := " 0 1"):
-                f.write(f"{st} {moho-2.5:2.5f} {moho+2.5:2.5f}\n")
+                f.write(f"{st} {moho-5:2.5f} {moho+5:2.5f}\n")
             else:
                 f.write(line)
 
