@@ -55,7 +55,7 @@ impl Param {
             "ampevtrmscut" => Ok(self.fixed.get(ParamString::AmpEvtrmsCut)),
             "dcheck" => Ok(self.fixed.get(ParamString::Dcheck)),
             "dvel" => Ok(self.fixed.get(ParamString::Dvel)),
-            _ => Err(PyKeyError::new_err("Key Error!")),
+            _ => Err(PyKeyError::new_err("Error Key for parameter!")),
         }
     }
     pub fn channel(&self) -> PyResult<String> {
@@ -78,7 +78,7 @@ impl Param {
             "all_events" => Ok(self.targets.get(TargetString::AllEvents)),
             "sens" => Ok(self.targets.get(TargetString::Sens)),
             "state" => Ok(self.targets.get(TargetString::State)),
-            _ => Err(PyKeyError::new_err("Key Error!")),
+            _ => Err(PyKeyError::new_err("Error Key for `target`!")),
         }
     }
     // model
