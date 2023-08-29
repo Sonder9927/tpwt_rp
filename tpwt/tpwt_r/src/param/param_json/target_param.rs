@@ -16,6 +16,8 @@ pub enum TargetString {
     Path,
     AllEvents,
     Sens,
+    Grids,
+    Mcmc,
     State,
 }
 
@@ -35,6 +37,8 @@ pub struct TargetParam {
     path: String,
     all_events: String,
     sens: String,
+    grids: String,
+    mcmc: String,
 }
 
 impl TargetParam {
@@ -52,6 +56,8 @@ impl TargetParam {
             TargetString::Path => &self.path,
             TargetString::AllEvents => &self.all_events,
             TargetString::Sens => &self.sens,
+            TargetString::Grids => &self.grids,
+            TargetString::Mcmc => &self.mcmc,
             TargetString::State => &self.state,
         }
     }
