@@ -137,7 +137,7 @@ def _generate_para_in(ff, f, sed, moho):
     if sed_flag:
         f.writelines(["10 1 1.0 3.5\n", "10 2 1.0 3.5\n"])
     f.writelines(
-        [f"{' '.join([f'{i:.2f}' for i in ii])}\n" for ii in para["vel_space"]]
+        [f"{' '.join([str(i) for i in ii])}\n" for ii in para["vel_space"]]
     )
 
 
