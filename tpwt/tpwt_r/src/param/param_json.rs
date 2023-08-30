@@ -38,8 +38,8 @@ pub struct Param {
 
 #[pymethods]
 impl Param {
-    pub fn parameter(&self, f: &str) -> PyResult<f64> {
-        match f {
+    pub fn parameter(&self, pp: &str) -> PyResult<f64> {
+        match pp {
             // testing parameters
             "smooth" => Ok(self.testing.get(ParamString::Smooth)),
             "damping" => Ok(self.testing.get(ParamString::Damping)),
@@ -55,7 +55,7 @@ impl Param {
             "ampevtrmscut" => Ok(self.fixed.get(ParamString::AmpEvtrmsCut)),
             "dcheck" => Ok(self.fixed.get(ParamString::Dcheck)),
             "dvel" => Ok(self.fixed.get(ParamString::Dvel)),
-            _ => Err(PyKeyError::new_err("Key Error!")),
+            _ => Err(PyKeyError::new_err(f!("Error Key `{pp}` for parameter!"))),
         }
     }
     pub fn channel(&self) -> PyResult<String> {
@@ -63,8 +63,8 @@ impl Param {
     }
 
     // targets
-    pub fn target(&self, f: &str) -> PyResult<&str> {
-        match f {
+    pub fn target(&self, tt: &str) -> PyResult<&str> {
+        match tt {
             "og_data" => Ok(self.targets.get(TargetString::OgData)),
             "evt30" => Ok(self.targets.get(TargetString::Evt30)),
             "evt120" => Ok(self.targets.get(TargetString::Evt120)),
@@ -77,8 +77,10 @@ impl Param {
             "path" => Ok(self.targets.get(TargetString::Path)),
             "all_events" => Ok(self.targets.get(TargetString::AllEvents)),
             "sens" => Ok(self.targets.get(TargetString::Sens)),
+            "grids" => Ok(self.targets.get(TargetString::Grids)),
+            "mcmc" => Ok(self.targets.get(TargetString::Mcmc)),
             "state" => Ok(self.targets.get(TargetString::State)),
-            _ => Err(PyKeyError::new_err("Key Error!")),
+            _ => Err(PyKeyError::new_err(f!("Error Key `{tt}` for `target`!"))),
         }
     }
     // model

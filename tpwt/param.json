@@ -18,6 +18,7 @@
     "dvel": 8
   },
   "targets": {
+    "state": "TPWT/state/state.json",
     "og_data": "target/data",
     "evt30": "TPWT/info/event_30.csv",
     "evt120": "TPWT/info/event_120.csv",
@@ -25,12 +26,13 @@
     "evt_all_lst": "TPWT/info/event_all.lst",
     "evt_lst": "TPWT/info/event.lst",
     "sta_lst": "TPWT/info/station.lst",
-    "state": "TPWT/state/state.json",
     "cut_dir": "target/event_cut",
     "sac": "target/SAC",
     "path": "target/path",
     "all_events": "target/all_events",
-    "sens": "target/sens_dir"
+    "sens": "target/sens_dir",
+    "grids": "target/grids",
+    "mcmc": "target/mcmc"
   },
   "model": {
     "pvs": [

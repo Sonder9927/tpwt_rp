@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+import json
 from pathlib import Path
 import shutil
 
@@ -9,15 +10,22 @@ from tpwt_p.rose import (
     points_boundary,
     points_inner,
     re_create_dir,
-)  # pyright: ignore
+)
 
 
 def mkdir_grids_path(
-    grids_dir: str, moho_file: str, output_dir, periods, sta_file
+    grids_dir, output_dir, *, moho_file, region, periods, sta_file=None
 ):
     gp = Path(grids_dir)
     out_path = re_create_dir(output_dir)
-    # sample moho grid
+    # make dict of grid phase vel of every period
+    merged_vel = merge_methods_periods(gp, "vel")
+    # make dict of grid std of every period
+    merged_std = merge_methods_periods(gp, "std")
+    # merge vel and std
+    merged_data = pd.merge(merged_vel, merged_std, on=["x", "y"], how="left")
+
+    # merge sampled moho data
     moho_sta = pd.read_csv(
         moho_file,
         header=None,
@@ -26,17 +34,24 @@ def mkdir_grids_path(
         names=["x", "y", "z"],
     )
     moho_sta = moho_sta[["y", "x", "z"]]
-    moho_data = grid_sample(
-        moho_sta, region=[115, 123, 26.5, 35.5], spacing=0.5
-    )
-    # make dict of grid phase vel of every period
-    merged_vel = merge_methods_periods(gp, "vel")
-    # make dict of grid std of every period
-    merged_std = merge_methods_periods(gp, "std")
-
-    # merge vel and std
-    merged_data = pd.merge(merged_vel, merged_std, on=["x", "y"], how="left")
+    moho_data = grid_sample(moho_sta, region=region, spacing=0.5)
     merged_data = pd.merge(merged_data, moho_data, on=["x", "y"], how="left")
+    # rename z -> moho
+    merged_data.rename(columns={"z": "moho"}, inplace=True)
+
+    utils = Path("TPWT/utils")
+    # merge sampled sed data
+    sed = pd.read_csv(
+        utils / "sedthk.xyz",
+        header=None,
+        delim_whitespace=True,
+        names=["x", "y", "z"],
+    )
+    sed_data = grid_sample(sed, region=region, spacing=0.5)
+    merged_data = pd.merge(merged_data, sed_data, on=["x", "y"])
+    # rename z -> sed
+    merged_data.rename(columns={"z": "sed"}, inplace=True)
+
     if sta_file is None:
         merged_inner = merged_data
     else:
@@ -49,32 +64,34 @@ def mkdir_grids_path(
         )
         boundary = points_boundary(sta)
         merged_inner = points_inner(merged_data, boundary=boundary)
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        # models
+        pool.submit(shutil.copytree, utils / "models", out_path / "models")
         for _, vs in merged_inner.iterrows():
-            executor.submit(init_grid_path, vs.to_dict(), out_path, periods)
+            pool.submit(init_grid_path, vs.to_dict(), out_path, periods, utils)
 
 
-def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
+def init_grid_path(
+    vs: dict[str, float],
+    out_path: Path,
+    periods: list[int],
+    utils: Path,
+):
     # mkdir grid path
     lo = vs["x"]
     la = vs["y"]
     init_path = out_path / f"{lo:.2f}_{la:.2f}"
     init_path.mkdir()
 
-    # set input files
     # dram T
-    shutil.copy("TPWT/utils/mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
+    shutil.copy(utils / "mc_DRAM_T.dat", init_path / r"input_DRAM_T.dat")
+
     # param
-    shutil.copy("TPWT/utils/mc_PARAM.inp", fin := init_path / r"para.inp")
-    moho = vs.get("z") or 30
-    with open(fin, "r+", encoding="utf-8") as f:
-        lines = f.readlines()
-        f.seek(0)
-        for line in lines:
-            if line.startswith(st := " 0 1"):
-                f.write(f"{st} {moho-2.5:2.5f} {moho+2.5:2.5f}\n")
-            else:
-                f.write(line)
+    shutil.copy(utils / "mc_PARAM.inp", fto := init_path / r"para.inp")
+    moho = vs.get("moho")
+    sed = vs.get("sed")
+    with open(utils / "mc_para.json") as ff, open(fto, "w") as f:
+        _generate_para_in(ff, f, sed, moho)
 
     # phase
     grid_phase = init_path / r"phase.input"
@@ -89,11 +106,39 @@ def init_grid_path(vs: dict[str, float], out_path: Path, periods: list[int]):
     lines.append("0\n0")
 
     with open(grid_phase, "w") as f:
-        # f.write(f"1 {len(lines)}\n")
-        # for line in lines:
-        #     f.write(line)
-        # f.write("0\n0")
         f.writelines(lines)
+
+
+def _generate_para_in(ff, f, sed, moho):
+    para = json.load(ff)
+    f.writelines([f"{para[ii]}\n" for ii in ["sm", "ice", "water"]])
+    if sed >= 2.0:
+        f.write("1\n")
+        sed_flag = True
+    else:
+        f.write("0\n")
+        sed_flag = False
+
+    f.writelines(
+        [
+            f"{para[ii]}\n"
+            for ii in [
+                "factor",
+                "zmax_Bs",
+                "NPTS_cBs",
+                "NPTS_mBs",
+                "referencefile",
+            ]
+        ]
+    )
+    if sed_flag:
+        f.write(f"0 0 {sed-2:2.5f} {sed+2:2.5f}\n")
+    f.write(f"0 1 {moho-5:2.5f} {moho+5:2.5f}\n")
+    if sed_flag:
+        f.writelines(["10 1 1.0 3.5\n", "10 2 1.0 3.5\n"])
+    f.writelines(
+        [f"{' '.join([str(i) for i in ii])}\n" for ii in para["vel_space"]]
+    )
 
 
 def merge_methods_periods(gp: Path, identifier: str):
