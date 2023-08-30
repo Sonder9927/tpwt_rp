@@ -114,9 +114,10 @@ def _generate_para_in(ff, f, sed, moho):
     f.writelines([f"{para[ii]}\n" for ii in ["sm", "ice", "water"]])
     if sed >= 2.0:
         f.write("1\n")
+        sed_flag = True
     else:
-        sed = None
         f.write("0\n")
+        sed_flag = False
 
     f.writelines(
         [
@@ -130,12 +131,14 @@ def _generate_para_in(ff, f, sed, moho):
             ]
         ]
     )
-    if sed is not None:
-        f.write(f"0 0 {sed-.5:2.5f} {sed+.5:2.5f}\n")
-    f.write(f" {moho-5:2.5f} {moho+5:2.5f}\n")
-    if sed is not None:
-        f.writelines(["10 1 1.11 3.21\n", "10 2 1.75 3.69\n"])
-    f.writelines([f"{' '.join(i)}\n" for i in para["vel_space"]])
+    if sed_flag:
+        f.write(f"0 0 {sed-2:2.5f} {sed+2:2.5f}\n")
+    f.write(f"0 1 {moho-5:2.5f} {moho+5:2.5f}\n")
+    if sed_flag:
+        f.writelines(["10 1 1.0 3.5\n", "10 2 1.0 3.5\n"])
+    f.writelines(
+        [f"{' '.join([f'{i:.2f}' for i in ii])}\n" for ii in para["vel_space"]]
+    )
 
 
 def merge_methods_periods(gp: Path, identifier: str):
