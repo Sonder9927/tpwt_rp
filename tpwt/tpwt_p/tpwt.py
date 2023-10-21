@@ -11,14 +11,20 @@ __author__ = "Sonder"
 
 
 def evts_from_30_to_120(param):
-    evt = tpwt_flow.Evt_Make(param.target("evt30"), param.target("evt120"))
-    evt.concat()
-    evt.cut_time_delta(param.parameter("timedelta"))
-    pattern = "%Y-%m-%dT%H:%M:%S"
+    evt = tpwt_flow.Evt_Make(
+        param.target("evt30"),
+        param.target("evt120"),
+        param.parameter("timedelta"),
+    )
+    # evt.concat()
+    # evt.cut_time_delta(param.parameter("timedelta"))
     cat_form = "%Y/%m/%d,%H:%M:%S"
-    evt.evt_cat(param.target("evt_cat"), pattern, cat_form)
+    # evt.evt_cat(param.target("evt_cat"), pattern, cat_form)
+    evt.extract(1, cat_form, param.target("evt_cat"))
     lst_form = "%Y%m%d%H%M"
-    evt.evt_lst(param.target("evt_all_lst"), pattern, lst_form)
+    # evt.evt_lst(param.target("evt_all_lst"), pattern, lst_form)
+    evt.extract(4, lst_form, param.target("evt_all_lst"))
+    evt.extract(5, lst_form, "TPWT/info/event_mag.lst")
 
 
 def evt_cut(param):
@@ -61,10 +67,10 @@ def tpwt_iter(param):
 
 def mcmc(param):
     periods = [
-        4, 6, 8, 10, 12, 14, 16, 18,
+        8, 10, 12, 14, 16, 18,
         20, 25, 30, 35, 40, 45, 50,
         60, 70, 80, 90, 100, 111, 125, 143,
-        ]  # fmt: skip
+    ]  # fmt: skip
     mc = tpwt_flow.MCMC(param)
     mc.mc_init("TPWT/utils/moho.lst", periods)  # , clip=True)
 

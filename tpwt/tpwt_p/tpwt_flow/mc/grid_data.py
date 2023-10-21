@@ -133,7 +133,7 @@ def _generate_para_in(ff, f, sed, moho):
     )
     if sed_flag:
         f.write(f"0 0 {sed-2:2.5f} {sed+2:2.5f}\n")
-    f.write(f"0 1 {moho-5:2.5f} {moho+5:2.5f}\n")
+    f.write(f"0 1 {moho-6:2.5f} {moho+6:2.5f}\n")
     if sed_flag:
         f.writelines(["10 1 1.0 3.5\n", "10 2 1.0 3.5\n"])
     f.writelines(
